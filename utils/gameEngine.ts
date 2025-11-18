@@ -1,3 +1,4 @@
+
 /**
  * Checks if a 4-digit string has unique digits.
  */
@@ -68,4 +69,56 @@ export const filterPossibilities = (
     const result = calculateAB(candidate, guess);
     return result.a === targetA && result.b === targetB;
   });
+};
+
+/**
+ * Identifies digits (0-9) that do not appear in ANY of the remaining possible answers.
+ */
+export const getImpossibleDigits = (possibleAnswers: string[]): string[] => {
+  // If the pool is full (start of game), no digits are impossible
+  if (possibleAnswers.length > 5000) return [];
+
+  const presentDigits = new Set<string>();
+  
+  for (const answer of possibleAnswers) {
+    for (const char of answer) {
+      presentDigits.add(char);
+    }
+    // Optimization: If we've found all 10 digits, none are impossible.
+    if (presentDigits.size === 10) return [];
+  }
+
+  const allDigits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  return allDigits.filter(digit => !presentDigits.has(digit));
+};
+
+/**
+ * Identifies digits that are confirmed to be in a specific position (0-3)
+ * in ALL remaining possible answers.
+ * Returns a map of { digit: positionIndex }.
+ */
+export const getConfirmedPositions = (possibleAnswers: string[]): Record<string, number> => {
+  const result: Record<string, number> = {};
+  
+  if (possibleAnswers.length === 0) return result;
+  
+  // Check each of the 4 positions (columns)
+  for (let col = 0; col < 4; col++) {
+    const firstVal = possibleAnswers[0][col];
+    let allMatch = true;
+    
+    // Check if every remaining answer has the same digit at this column
+    for (let i = 1; i < possibleAnswers.length; i++) {
+      if (possibleAnswers[i][col] !== firstVal) {
+        allMatch = false;
+        break;
+      }
+    }
+    
+    if (allMatch) {
+      result[firstVal] = col;
+    }
+  }
+  
+  return result;
 };

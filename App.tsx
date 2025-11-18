@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { generateAllCombinations, generateSecret, calculateAB, filterPossibilities } from './utils/gameEngine';
+
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { generateAllCombinations, generateSecret, calculateAB, filterPossibilities, getImpossibleDigits, getConfirmedPositions } from './utils/gameEngine';
 import { GuessResult, GameState, LoadingState } from './types';
 import { getAIHint } from './services/geminiService';
 import NumberPad from './components/NumberPad';
@@ -50,6 +51,16 @@ const App: React.FC = () => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [gameState.guesses]);
+
+  // Calculate impossible digits based on remaining possible answers
+  const impossibleDigits = useMemo(() => {
+    return getImpossibleDigits(gameState.possibleAnswers);
+  }, [gameState.possibleAnswers]);
+
+  // Calculate confirmed positions
+  const confirmedPositions = useMemo(() => {
+    return getConfirmedPositions(gameState.possibleAnswers);
+  }, [gameState.possibleAnswers]);
 
   const handleDigitClick = (digit: string) => {
     if (currentInput.length < 4 && !currentInput.includes(digit)) {
@@ -164,6 +175,8 @@ const App: React.FC = () => {
                 onSubmit={handleSubmitGuess}
                 disabled={gameState.status !== 'playing'}
                 currentLength={currentInput.length}
+                impossibleDigits={impossibleDigits}
+                confirmedPositions={confirmedPositions}
               />
             )}
           </div>

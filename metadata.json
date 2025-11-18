@@ -1,0 +1,5 @@
+{
+  "name": "1A2B 猜數字大師",
+  "description": "經典的 1A2B (Bulls and Cows) 猜數字遊戲，內建邏輯求解器與 AI 策略提示功能。",
+  "requestFramePermissions": []
+}

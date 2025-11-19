@@ -122,3 +122,21 @@ export const getConfirmedPositions = (possibleAnswers: string[]): Record<string,
   
   return result;
 };
+
+/**
+ * Analyzes the remaining answers and returns the possible digits for each position (0-3).
+ * Returns an array of 4 arrays, e.g., [['1', '2'], ['3'], ['5', '6'], ['8', '9']]
+ */
+export const getPositionalPossibilities = (possibleAnswers: string[]): string[][] => {
+  if (possibleAnswers.length === 0) return [[], [], [], []];
+
+  const positions: Set<string>[] = [new Set(), new Set(), new Set(), new Set()];
+
+  for (const answer of possibleAnswers) {
+    for (let i = 0; i < 4; i++) {
+      positions[i].add(answer[i]);
+    }
+  }
+
+  return positions.map(set => Array.from(set).sort());
+};

@@ -26,6 +26,14 @@ const ChevronDownIcon = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m6 9 6 6 6-6"/></svg>
 );
 
+const UnlockIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+);
+
+const LockIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+);
+
 // --- Custom Logo Component ---
 const GameLogo = () => (
   <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -46,7 +54,6 @@ const CyberBackground = () => (
         </pattern>
       </defs>
       <rect width="100%" height="100%" fill="url(#grid)" />
-      {/* Decorative circles */}
       <circle cx="10%" cy="20%" r="100" fill="url(#grid)" className="text-cyan-800/20" />
       <circle cx="90%" cy="80%" r="150" fill="url(#grid)" className="text-cyan-800/20" />
     </svg>
@@ -159,15 +166,15 @@ const PositionalAnalysis = ({ possibleAnswers }: { possibleAnswers: string[] }) 
   const positionalData = useMemo(() => getPositionalPossibilities(possibleAnswers), [possibleAnswers]);
 
   return (
-    <div className="space-y-2">
-       <div className="grid grid-cols-4 gap-1.5">
+    <div className="space-y-1.5">
+       <div className="grid grid-cols-4 gap-1">
          {positionalData.map((digits, idx) => (
-           <div key={idx} className="bg-slate-900/50 border border-slate-700/50 rounded p-1.5 text-center flex flex-col h-full">
+           <div key={idx} className="bg-slate-900/50 border border-slate-700/50 rounded px-1 py-1 text-center flex flex-col h-full">
              <div className="text-[9px] text-slate-500 mb-0.5 font-bold border-b border-slate-800 pb-0.5">第 {idx + 1} 位</div>
              <div className="flex-1 flex items-center justify-center">
-                <div className="text-cyan-300 font-mono text-xs font-bold leading-snug break-all">
-                  {digits.join(' ')}
-                </div>
+               <div className="text-[10px] leading-tight text-cyan-300 break-all font-mono">
+                 {digits.join(' ')}
+               </div>
              </div>
            </div>
          ))}
@@ -176,437 +183,332 @@ const PositionalAnalysis = ({ possibleAnswers }: { possibleAnswers: string[] }) 
   );
 };
 
-// --- Reusable Game Review List Component ---
-const GameReviewList = ({ guesses }: { guesses: GuessResult[] }) => {
-  const [reviewData, setReviewData] = useState<ReviewStep[]>([]);
-
-  useEffect(() => {
-    const data = generateGameReview(guesses);
-    setReviewData(data);
-  }, [guesses]);
+// --- Sub-component for Game History List ---
+const GameHistory = ({ guesses, totalGuesses }: { guesses: GuessResult[], totalGuesses: number }) => {
+  if (guesses.length === 0) return null;
 
   return (
-    <div className="space-y-3 pb-8">
-        <div className="flex items-center gap-2 mb-2 text-cyan-400 px-1 justify-center">
-             <BrainIcon />
-             <h3 className="font-bold text-sm uppercase tracking-wider">推導過程回顧</h3>
-        </div>
-       {reviewData.map((step) => (
-         <div key={step.stepIndex} className="bg-slate-900/40 rounded-xl p-3 border border-slate-700/50 relative overflow-hidden group">
-            <div className="flex justify-between items-start mb-2 relative z-10">
-               <div className="flex items-center gap-3">
-                  <span className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-xs text-slate-400 font-mono border border-slate-600">
-                    {step.stepIndex}
-                  </span>
-                  <span className="font-mono text-lg font-bold text-white tracking-wider">
-                    {step.guess}
-                  </span>
-                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
-                    step.result === '4A0B' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-                  }`}>
-                    {step.result}
-                  </span>
-               </div>
-               <div className="text-right">
-                  <span className="text-xs font-bold text-cyan-300 block bg-cyan-900/30 px-2 py-0.5 rounded-full border border-cyan-800/30">
-                    {step.comment}
-                  </span>
-               </div>
-            </div>
-
-            {/* Insight Text - Enhanced */}
-            <div className="relative z-10 bg-slate-800/50 rounded p-2 mb-2 text-xs text-slate-300 leading-relaxed border border-white/5">
-               {step.insight}
-            </div>
-
-            <div className="relative z-10 flex justify-between items-end text-[10px] text-slate-400 opacity-80 mt-1">
-               <div className="font-mono">
-                 剩餘: <span className="text-white font-bold">{step.candidatesAfter}</span>
-               </div>
-               <div className="font-bold">
-                 <span className={`${step.reductionPercent > 50 ? 'text-emerald-400' : 'text-slate-400'}`}>
-                   -{step.reductionPercent.toFixed(1)}%
-                 </span>
-               </div>
+    <div className="grid grid-cols-2 gap-1.5 mt-2">
+      {guesses.map((result, idx) => {
+        // Since guesses are reversed, the first one (index 0) is the latest
+        const isLatest = idx === 0;
+        const realIndex = totalGuesses - idx; // Calculate original index (1-based)
+        
+        return (
+          <div 
+            key={`${result.guess}-${idx}`}
+            className={`
+              flex items-center justify-between px-2 py-1.5 rounded-lg border 
+              ${isLatest 
+                ? 'bg-cyan-950/40 border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.15)] ring-1 ring-cyan-500/20 col-span-2' 
+                : 'bg-slate-800/40 border-slate-700/50 text-slate-400 col-span-1'
+              }
+            `}
+          >
+            <div className="flex items-center gap-2">
+              <span className={`text-[9px] font-mono px-1 py-0.5 rounded ${isLatest ? 'bg-cyan-900 text-cyan-200' : 'bg-slate-700 text-slate-500'}`}>
+                #{realIndex}
+              </span>
+              <span className={`font-mono font-bold tracking-widest ${isLatest ? 'text-lg text-white' : 'text-sm'}`}>
+                {result.guess}
+              </span>
             </div>
             
-            {/* Visual Bar at bottom */}
-            <div className="absolute bottom-0 left-0 h-0.5 bg-slate-700/30 w-full mt-2">
-               <div 
-                 className="h-full bg-gradient-to-r from-cyan-500 to-emerald-400 transition-all duration-500" 
-                 style={{ width: `${step.reductionPercent}%` }}
-               ></div>
+            <div className={`font-mono font-bold ${isLatest ? 'text-lg' : 'text-sm'}`}>
+              <span className={result.a === 4 ? "text-green-400" : isLatest ? "text-green-400" : "text-slate-300"}>{result.a}A</span>
+              <span className={result.b > 0 ? "text-yellow-400" : isLatest ? "text-yellow-400" : "text-slate-500"}>{result.b}B</span>
             </div>
-         </div>
-       ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// --- Sub-component for Game Review Modal ---
+const GameReviewList = ({ guesses }: { guesses: GuessResult[] }) => {
+  const steps = useMemo(() => generateGameReview(guesses), [guesses]);
+
+  return (
+    <div className="w-full flex-1 overflow-y-auto px-1 pr-2 space-y-3 custom-scrollbar">
+      {steps.map((step) => (
+        <div key={step.stepIndex} className="relative pl-4 border-l-2 border-slate-700 last:border-cyan-500 last:border-l-2">
+          {/* Timeline Dot */}
+          <div className={`absolute -left-[5px] top-2 w-2 h-2 rounded-full ${step.stepIndex === steps.length ? 'bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.8)]' : 'bg-slate-700'}`}></div>
+          
+          <div className="bg-slate-800/30 rounded p-2 border border-slate-700/50">
+             <div className="flex justify-between items-start mb-1">
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-slate-500 font-mono">STEP {step.stepIndex}</span>
+                    <span className="font-mono font-bold text-white tracking-widest">{step.guess}</span>
+                </div>
+                <span className={`text-xs font-bold font-mono px-1.5 py-0.5 rounded ${step.guess === steps[steps.length-1].guess && step.result === '4A0B' ? 'bg-green-900 text-green-300' : 'bg-slate-900 text-slate-400'}`}>
+                    {step.result}
+                </span>
+             </div>
+             
+             {/* Progress Bar for Reduction */}
+             <div className="flex items-center gap-2 mb-1">
+                 <div className="flex-1 h-1 bg-slate-700 rounded-full overflow-hidden">
+                     <div className="h-full bg-emerald-500" style={{width: `${step.reductionPercent}%`}}></div>
+                 </div>
+                 <span className="text-[9px] text-emerald-400 font-mono">-{Math.round(step.reductionPercent)}%</span>
+             </div>
+             
+             {/* Text Analysis */}
+             <div className="flex flex-col gap-0.5">
+                 <span className="text-[11px] text-cyan-200 font-bold">{step.comment}</span>
+                 <span className="text-[10px] text-slate-400 leading-tight">{step.insight}</span>
+             </div>
+          </div>
+        </div>
+      ))}
+      
+      {/* End Badge */}
+      <div className="flex justify-center mt-4 mb-2">
+          <div className="bg-cyan-900/40 text-cyan-300 border border-cyan-500/30 px-4 py-1 rounded-full text-xs font-bold shadow-[0_0_15px_rgba(6,182,212,0.2)]">
+              解碼完成
+          </div>
+      </div>
     </div>
   );
 };
 
 
-const App: React.FC = () => {
-  const [currentInput, setCurrentInput] = useState<string>('');
-  const [difficulty, setDifficulty] = useState<'easy' | 'hard'>('easy');
+// --- MAIN APP ---
+
+type Difficulty = 'easy' | 'hard' | 'smart';
+
+export default function App() {
+  // Game State
   const [gameState, setGameState] = useState<GameState>({
-    secret: '',
+    secret: generateSecret(),
     guesses: [],
-    possibleAnswers: [],
+    possibleAnswers: generateAllCombinations(),
     status: 'playing',
   });
+  const [input, setInput] = useState('');
+  const [difficulty, setDifficulty] = useState<Difficulty>('easy');
+
+  // Calculation Hooks
+  const impossibleDigits = useMemo(() => getImpossibleDigits(gameState.possibleAnswers), [gameState.possibleAnswers]);
+  const confirmedPositions = useMemo(() => getConfirmedPositions(gameState.possibleAnswers), [gameState.possibleAnswers]);
+  const digitProbabilities = useMemo(() => getDigitProbabilities(gameState.possibleAnswers), [gameState.possibleAnswers]);
   
+  // Logic: Hints are locked in EASY mode for the first 3 guesses. 
+  // In SMART mode, hints (memory aids) are ALWAYS available, but probabilities are HIDDEN.
+  // In HARD mode, everything is hidden.
+  const isHintLocked = difficulty === 'easy' && gameState.guesses.length < 3;
+  
+  // What to pass to UI?
+  const showMemoryHints = (difficulty === 'easy' && !isHintLocked) || difficulty === 'smart';
+  const showPredictionHints = (difficulty === 'easy' && !isHintLocked);
+
+  // Scroll ref
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Initialize game
-  const startNewGame = () => {
-    const newSecret = generateSecret();
-    setGameState({
-      secret: newSecret,
-      guesses: [],
-      possibleAnswers: generateAllCombinations(),
-      status: 'playing',
-    });
-    setCurrentInput('');
-  };
-
-  useEffect(() => {
-    startNewGame();
-  }, []);
-
-  // Auto-scroll history to TOP (since we reverse order)
+  // Auto-scroll to top when guesses change
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = 0;
     }
-  }, [gameState.guesses, gameState.status]);
+  }, [gameState.guesses]);
 
-  // Logic: Hints only show in Easy Mode AFTER 3 guesses have been made (guesses.length >= 3)
-  const showHints = difficulty === 'easy' && gameState.guesses.length >= 3;
+  const handleRestart = () => {
+    setGameState({
+      secret: generateSecret(),
+      guesses: [],
+      possibleAnswers: generateAllCombinations(),
+      status: 'playing',
+    });
+    setInput('');
+  };
 
-  // Calculate impossible digits
-  const impossibleDigits = useMemo(() => {
-    return getImpossibleDigits(gameState.possibleAnswers);
-  }, [gameState.possibleAnswers]);
+  const toggleDifficulty = () => {
+    setDifficulty(prev => {
+        if (prev === 'easy') return 'smart';
+        if (prev === 'smart') return 'hard';
+        return 'easy';
+    });
+  };
 
-  // Calculate confirmed positions
-  const confirmedPositions = useMemo(() => {
-    return getConfirmedPositions(gameState.possibleAnswers);
-  }, [gameState.possibleAnswers]);
+  const handleGuess = () => {
+    if (input.length !== 4) return;
 
-  // Calculate digit probabilities
-  const digitProbabilities = useMemo(() => {
-    return getDigitProbabilities(gameState.possibleAnswers);
-  }, [gameState.possibleAnswers]);
+    const { a, b } = calculateAB(gameState.secret, input);
+    
+    // Logic: Calculate next pool based on this guess
+    const nextPool = filterPossibilities(gameState.possibleAnswers, input, a, b);
+    
+    // New guess object
+    const newGuess: GuessResult = { guess: input, a, b };
+
+    // Update state
+    setGameState(prev => ({
+      ...prev,
+      guesses: [...prev.guesses, newGuess], // Store in chronological order (0 is oldest)
+      possibleAnswers: nextPool,
+      status: a === 4 ? 'won' : 'playing',
+    }));
+
+    setInput('');
+  };
 
   const handleDigitClick = (digit: string) => {
-    if (currentInput.length < 4 && !currentInput.includes(digit)) {
-      setCurrentInput((prev) => prev + digit);
+    if (input.length < 4 && !input.includes(digit)) {
+      setInput(prev => prev + digit);
     }
   };
 
   const handleDelete = () => {
-    setCurrentInput((prev) => prev.slice(0, -1));
+    setInput(prev => prev.slice(0, -1));
   };
 
-  const handleSubmitGuess = () => {
-    if (currentInput.length !== 4) return;
-
-    const { a, b } = calculateAB(gameState.secret, currentInput);
-    const newPossibilities = filterPossibilities(
-      gameState.possibleAnswers,
-      currentInput,
-      a,
-      b
-    );
-    const newGuessResult: GuessResult = { guess: currentInput, a, b };
-    const newStatus = a === 4 ? 'won' : 'playing';
-
-    setGameState((prev) => ({
-      ...prev,
-      guesses: [...prev.guesses, newGuessResult],
-      possibleAnswers: newPossibilities,
-      status: newStatus,
-    }));
-
-    setCurrentInput('');
-  };
-
-  const toggleDifficulty = () => {
-    setDifficulty(prev => prev === 'easy' ? 'hard' : 'easy');
-  };
-
-  // --- Render Helpers ---
-
-  const InputDisplay = ({ compact = false }: { compact?: boolean }) => (
-    <div className={`flex justify-center gap-1.5 ${compact ? 'mb-1' : 'mb-2'}`}>
-      {[0, 1, 2, 3].map((idx) => (
-        <div 
-          key={idx}
-          className={`flex items-center justify-center font-mono rounded-full border-2 transition-all z-10
-            ${compact ? 'w-10 h-10 text-xl' : 'w-14 h-14 text-3xl'}
-            ${currentInput[idx] 
-              ? 'border-cyan-500 bg-cyan-900/20 text-white shadow-[0_0_15px_rgba(6,182,212,0.3)]' 
-              : 'border-slate-600 bg-slate-900/50 text-slate-500'}`}
-        >
-          {currentInput[idx] || ''}
-        </div>
-      ))}
-    </div>
-  );
-
-  const GameHistory = ({ compact = false }: { compact?: boolean }) => {
-    const reversedGuesses = [...gameState.guesses].reverse();
-    return (
-      <div className={gameState.guesses.length === 0 ? "" : "grid grid-cols-2 gap-2 content-start relative z-10"}>
-        {gameState.guesses.length === 0 ? (
-          <div className="h-48 flex flex-col items-center justify-center text-slate-600">
-            <HistoryIcon />
-            <p className="mt-2 text-sm">尚未有猜測紀錄</p>
-          </div>
-        ) : (
-          reversedGuesses.map((g, index) => {
-            // "Latest" is the first element because we reversed the array
-            const isLatest = index === 0;
-            return (
-              <div 
-                key={index} 
-                className={`
-                  flex items-center justify-between p-2 rounded-lg border font-mono animate-in fade-in slide-in-from-top-4 duration-300 fill-mode-backwards
-                  ${compact ? 'text-sm' : 'text-base'}
-                  ${isLatest 
-                    ? 'bg-cyan-900/30 border-cyan-500/50 shadow-[0_0_10px_rgba(34,211,238,0.2)]' 
-                    : 'bg-slate-800/60 border-slate-700/50 text-slate-400'
-                  }
-                `}
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <div className="flex items-center gap-2">
-                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${isLatest ? 'bg-cyan-800 text-cyan-200' : 'bg-slate-700 text-slate-500'}`}>
-                     {gameState.guesses.length - index}
-                  </span>
-                  <span className={`${isLatest ? 'text-cyan-100 font-bold' : ''}`}>{g.guess}</span>
-                </div>
-                <div className={`font-bold tracking-widest px-2 py-0.5 rounded ${
-                  g.a === 4 
-                    ? 'bg-green-500 text-white shadow-[0_0_10px_rgba(34,199,89,0.5)]' 
-                    : isLatest
-                      ? 'bg-slate-900/50 text-cyan-300'
-                      : 'bg-slate-900/30 text-slate-300'
-                }`}>
-                  {g.a}A{g.b}B
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-    );
-  };
-
-  const AnalysisPanel = ({ isMobile = false }) => (
-    <div className={`space-y-3 ${isMobile ? 'text-sm' : ''} relative z-10`}>
-      {/* Clean Stats */}
-      <GameStats 
-        remainingCount={gameState.possibleAnswers.length} 
-        totalCombinations={5040} 
-      />
-
-      {/* Hints (Positional ONLY) - Simplified Logic: Show if unlocked AND useful (<=50) */}
-      {showHints && gameState.possibleAnswers.length <= 50 && (
-          <div className="animate-in fade-in duration-500 pt-1">
-             <PositionalAnalysis possibleAnswers={gameState.possibleAnswers} />
-          </div>
-      )}
-    </div>
-  );
-
-  const WinHeader = () => (
-      <div className="bg-gradient-to-br from-green-500/20 to-emerald-900/20 border border-green-500/30 rounded-2xl p-4 text-center animate-in zoom-in duration-300 backdrop-blur-sm mb-4">
-        <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-2 shadow-[0_0_20px_rgba(34,197,94,0.4)]">
-          <span className="text-2xl">🎉</span>
-        </div>
-        <h2 className="text-xl font-bold text-green-400">破解成功！</h2>
-        <p className="text-slate-300">謎底是 <span className="text-white font-mono text-lg font-bold mx-1">{gameState.secret}</span></p>
-        <p className="text-xs text-slate-400">總共猜了 <span className="text-white font-bold">{gameState.guesses.length}</span> 次</p>
-      </div>
-  );
-
-  // --- Mobile Layout ---
-  const MobileLayout = () => (
-    <div className="flex flex-col h-[100dvh] bg-slate-900 text-slate-100 overflow-hidden relative">
-      <CyberBackground />
-      {/* Header */}
-      <header className="flex-none p-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex justify-between items-center z-20">
-        <div className="flex items-center gap-2">
-          <GameLogo />
-          <h1 className="font-bold text-lg tracking-wider text-cyan-50">1A2B</h1>
-        </div>
-        <button 
-          onClick={toggleDifficulty}
-          className={`px-3 py-1 rounded-full text-xs font-bold transition-all border ${
-            difficulty === 'easy' 
-              ? 'bg-cyan-900/50 text-cyan-300 border-cyan-700' 
-              : 'bg-red-900/50 text-red-300 border-red-700'
-          }`}
-        >
-          {difficulty === 'easy' ? '簡單' : '困難'}
-        </button>
-      </header>
-
-      {gameState.status === 'won' ? (
-        // --- Win State Layout (Mobile) ---
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col z-10">
-          <WinHeader />
-          <GameReviewList guesses={gameState.guesses} />
-          
-          <div className="mt-auto pt-4 sticky bottom-0 bg-slate-900/90 p-4 border-t border-slate-800 -mx-4">
-            <button
-              onClick={startNewGame}
-              className="w-full py-4 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-lg shadow-[0_0_20px_rgba(8,145,178,0.5)] transition-all active:scale-95"
-            >
-              再來一局
-            </button>
-          </div>
-        </div>
-      ) : (
-        // --- Playing State Layout (Mobile) ---
-        <>
-          <div className="flex-none bg-slate-900/80 z-20 px-4 py-2 border-b border-slate-800">
-             <AnalysisPanel isMobile />
-          </div>
-
-          <div 
-            ref={scrollRef}
-            className="flex-1 overflow-y-auto p-3 scroll-smooth z-10"
-          >
-             {gameState.guesses.length === 0 && (
-                <GameRules className="mb-4" />
-             )}
-             <GameHistory compact />
-          </div>
-
-          <div className="flex-none bg-slate-900/95 border-t border-slate-800 p-3 z-30 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
-             <InputDisplay compact />
-             <NumberPad 
-               onDigitClick={handleDigitClick}
-               onDelete={handleDelete}
-               onSubmit={handleSubmitGuess}
-               disabled={gameState.status !== 'playing'}
-               currentLength={currentInput.length}
-               impossibleDigits={showHints ? impossibleDigits : []}
-               confirmedPositions={showHints ? confirmedPositions : {}}
-               digitProbabilities={showHints ? digitProbabilities : {}}
-               compact
-             />
-          </div>
-        </>
-      )}
-    </div>
-  );
-
-  // --- Desktop Layout ---
-  const DesktopLayout = () => (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-8 relative">
-      <CyberBackground />
-      <div className="w-full max-w-5xl grid grid-cols-12 gap-8 relative z-10">
-        {/* Left Column: Game Area */}
-        <div className="col-span-7 bg-slate-800/50 backdrop-blur-sm rounded-3xl p-8 border border-slate-700 shadow-2xl flex flex-col min-h-[600px]">
-          <header className="flex justify-between items-center mb-6">
-            <div className="flex items-center gap-3">
-              <GameLogo />
-              <h1 className="text-3xl font-bold tracking-wider text-white">1A2B <span className="text-cyan-400">Master</span></h1>
-            </div>
-            <div className="flex gap-2">
-              <button 
-                onClick={toggleDifficulty}
-                className={`px-4 py-1.5 rounded-full text-sm font-bold transition-all border ${
-                  difficulty === 'easy' 
-                    ? 'bg-cyan-900/50 text-cyan-300 border-cyan-700 hover:bg-cyan-800' 
-                    : 'bg-red-900/50 text-red-300 border-red-700 hover:bg-red-800'
-                }`}
-              >
-                {difficulty === 'easy' ? '簡單模式' : '困難模式'}
-              </button>
-              <button 
-                onClick={startNewGame}
-                className="p-2 rounded-full hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
-                title="重新開始"
-              >
-                <RefreshIcon />
-              </button>
-            </div>
-          </header>
-
-          {gameState.status === 'won' ? (
-            <div className="flex-1 flex flex-col items-center justify-center animate-in zoom-in duration-300">
-               <WinHeader />
-               <div className="w-full max-w-md h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                  <GameReviewList guesses={gameState.guesses} />
-               </div>
-               <button
-                  onClick={startNewGame}
-                  className="mt-6 px-12 py-3 rounded-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xl shadow-[0_0_20px_rgba(8,145,178,0.5)] transition-all active:scale-95"
-                >
-                  再來一局
-                </button>
-            </div>
-          ) : (
-            <>
-              {gameState.guesses.length === 0 && <GameRules className="mb-6" />}
-              
-              <div className="flex-1 bg-slate-900/50 rounded-2xl p-4 mb-6 border border-slate-700/50 overflow-y-auto max-h-[400px]">
-                <GameHistory />
-              </div>
-
-              <div className="mt-auto">
-                <InputDisplay />
-                <NumberPad 
-                  onDigitClick={handleDigitClick}
-                  onDelete={handleDelete}
-                  onSubmit={handleSubmitGuess}
-                  disabled={gameState.status !== 'playing'}
-                  currentLength={currentInput.length}
-                  impossibleDigits={showHints ? impossibleDigits : []}
-                  confirmedPositions={showHints ? confirmedPositions : {}}
-                  digitProbabilities={showHints ? digitProbabilities : {}}
-                />
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Right Column: Analysis Panel (Only visible in playing mode) */}
-        <div className="col-span-5 space-y-6">
-           {gameState.status === 'playing' ? (
-             <div className="bg-slate-800/50 backdrop-blur-sm rounded-3xl p-6 border border-slate-700 shadow-xl sticky top-8">
-               <h2 className="text-xl font-bold text-slate-200 mb-4 flex items-center gap-2">
-                 <BrainIcon /> 戰況分析
-               </h2>
-               <AnalysisPanel />
-             </div>
-           ) : (
-             // Decorative placeholder for win state
-             <div className="bg-slate-800/30 backdrop-blur-sm rounded-3xl p-6 border border-slate-700/50 h-full flex items-center justify-center text-slate-600">
-                <div className="text-center opacity-50">
-                   <GameLogo />
-                   <p className="mt-4 text-sm font-mono">SYSTEM DECRYPTED</p>
-                </div>
-             </div>
-           )}
-        </div>
-      </div>
-    </div>
-  );
+  // Derived state for display
+  const reversedGuesses = [...gameState.guesses].reverse(); // Show latest first
+  const remainingCount = gameState.possibleAnswers.length;
 
   return (
-    <>
-      <div className="md:hidden">
-        <MobileLayout />
-      </div>
-      <div className="hidden md:block">
-        <DesktopLayout />
-      </div>
-    </>
-  );
-};
+    <div className="flex flex-col h-[100dvh] w-full max-w-md mx-auto relative text-slate-100 overflow-hidden font-sans">
+      <CyberBackground />
+      
+      {/* Header */}
+      <header className="flex-none p-3 pb-2 flex items-center justify-between z-10 bg-gradient-to-b from-slate-900 to-slate-900/0">
+        <div className="flex items-center gap-2">
+           <GameLogo />
+           <div>
+             <h1 className="text-xl font-bold tracking-tight text-white leading-none">1A2B</h1>
+             <p className="text-[10px] text-cyan-400 font-mono tracking-widest opacity-80">DECODER</p>
+           </div>
+        </div>
+        <div className="flex items-center gap-2">
+            <button 
+              onClick={toggleDifficulty}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all flex items-center gap-1.5
+                ${difficulty === 'easy' ? 'bg-emerald-900/50 text-emerald-300 border-emerald-700 hover:bg-emerald-800' : ''}
+                ${difficulty === 'smart' ? 'bg-cyan-900/50 text-cyan-300 border-cyan-700 hover:bg-cyan-800' : ''}
+                ${difficulty === 'hard' ? 'bg-red-900/50 text-red-300 border-red-700 hover:bg-red-800' : ''}
+              `}
+            >
+              {difficulty === 'easy' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_5px_currentColor]"></span>}
+              {difficulty === 'smart' && <BrainIcon />}
+              {difficulty === 'hard' && <span className="w-1.5 h-1.5 rounded-full bg-red-400 shadow-[0_0_5px_currentColor]"></span>}
+              
+              {difficulty === 'easy' && "簡單"}
+              {difficulty === 'smart' && "智慧"}
+              {difficulty === 'hard' && "困難"}
+            </button>
+            <button 
+              onClick={handleRestart}
+              className="p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              title="重新開始"
+            >
+              <RefreshIcon />
+            </button>
+        </div>
+      </header>
 
-export default App;
+      {/* Main Content Area - Scrollable */}
+      <main className="flex-1 overflow-y-auto px-4 pb-2 z-10 custom-scrollbar flex flex-col" ref={scrollRef}>
+        
+        {gameState.status === 'won' ? (
+           // --- WIN STATE ---
+           <div className="flex-1 flex flex-col items-center animate-in zoom-in-95 duration-500">
+              <div className="mt-4 mb-2 text-center">
+                  <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-br from-cyan-300 to-blue-500 drop-shadow-[0_0_10px_rgba(6,182,212,0.5)]">
+                      YOU WIN!
+                  </h2>
+                  <p className="text-slate-400 text-sm font-mono mt-1">
+                      共猜測 <span className="text-white font-bold text-lg">{gameState.guesses.length}</span> 次
+                  </p>
+              </div>
+              
+              {/* Review Timeline */}
+              <div className="w-full flex-1 bg-slate-900/50 rounded-xl border border-slate-700/50 p-3 mb-4 flex flex-col overflow-hidden relative backdrop-blur-sm">
+                  <div className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2 flex items-center gap-2 border-b border-slate-800 pb-2">
+                    <HistoryIcon />
+                    解題推導回顧
+                  </div>
+                  <GameReviewList guesses={gameState.guesses} />
+              </div>
+           </div>
+        ) : (
+          // --- PLAYING STATE ---
+          <div className="flex flex-col gap-2 min-h-min pb-20">
+            {/* Rules (Auto-collapsible, only show if no guesses) */}
+            {gameState.guesses.length === 0 && (
+                <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+                    <GameRules />
+                </div>
+            )}
+            
+            {/* Analysis Panel (Stats) */}
+            <div className="bg-slate-800/40 rounded-lg p-3 border border-slate-700/50 backdrop-blur-sm">
+                 <GameStats remainingCount={remainingCount} totalCombinations={5040} />
+                 
+                 {/* Only show positional analysis when meaningful and low count */}
+                 {remainingCount < 50 && remainingCount > 0 && (
+                     <div className="mt-2 pt-2 border-t border-slate-700/50 animate-in fade-in">
+                        <PositionalAnalysis possibleAnswers={gameState.possibleAnswers} />
+                     </div>
+                 )}
+            </div>
+
+            {/* History List */}
+            <GameHistory guesses={reversedGuesses} totalGuesses={gameState.guesses.length} />
+          </div>
+        )}
+      </main>
+
+      {/* Footer / Input Area */}
+      <footer className="flex-none p-4 pt-1 bg-slate-900/90 backdrop-blur-md border-t border-slate-800 z-20 pb-safe">
+        {gameState.status === 'won' ? (
+           <button 
+             onClick={handleRestart}
+             className="w-full py-4 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-2xl shadow-[0_0_20px_rgba(8,145,178,0.4)] text-lg tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
+           >
+             <RefreshIcon />
+             再來一局
+           </button>
+        ) : (
+            <div className="flex flex-col gap-1 max-w-md mx-auto w-full">
+              {/* Input Display */}
+              <div className="flex justify-center gap-3 mb-1">
+                {[0, 1, 2, 3].map((i) => (
+                  <div 
+                    key={i}
+                    className={`
+                      w-10 h-12 rounded-xl flex items-center justify-center text-2xl font-mono font-bold
+                      bg-slate-800 border-2 transition-all duration-150
+                      ${input[i] 
+                        ? 'border-cyan-500/50 text-white shadow-[0_0_10px_rgba(6,182,212,0.2)] scale-105' 
+                        : 'border-slate-700 text-slate-600'
+                      }
+                    `}
+                  >
+                    {input[i] || ''}
+                  </div>
+                ))}
+              </div>
+
+              {/* Number Pad */}
+              <NumberPad 
+                onDigitClick={handleDigitClick}
+                onDelete={handleDelete}
+                onSubmit={handleGuess}
+                disabled={gameState.status !== 'playing'}
+                currentLength={input.length}
+                // --- Hint Logic ---
+                // Impossible/Confirmed passed if Smart OR (Easy & Unlocked)
+                impossibleDigits={showMemoryHints ? impossibleDigits : []}
+                confirmedPositions={showMemoryHints ? confirmedPositions : {}}
+                // Probabilities passed ONLY if Easy & Unlocked
+                digitProbabilities={showPredictionHints ? digitProbabilities : {}}
+                compact={true}
+              />
+            </div>
+        )}
+      </footer>
+    </div>
+  );
+}

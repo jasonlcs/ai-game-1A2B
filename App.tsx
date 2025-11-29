@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { generateAllCombinations, generateSecret, calculateAB, filterPossibilities, getImpossibleDigits, getConfirmedPositions, getPositionalPossibilities } from './utils/gameEngine';
+import { generateAllCombinations, generateSecret, calculateAB, filterPossibilities, getImpossibleDigits, getConfirmedPositions, getPositionalPossibilities, getDigitProbabilities, generateGameReview, ReviewStep } from './utils/gameEngine';
 import { GuessResult, GameState } from './types';
 import NumberPad from './components/NumberPad';
 import GameStats from './components/GameStats';
@@ -26,12 +26,40 @@ const ChevronDownIcon = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m6 9 6 6 6-6"/></svg>
 );
 
+// --- Custom Logo Component ---
+const GameLogo = () => (
+  <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="2" className="text-slate-600" strokeDasharray="4 4" />
+    <circle cx="16" cy="16" r="10" stroke="currentColor" strokeWidth="2" className="text-cyan-500" />
+    <path d="M16 2V6M16 26V30M2 16H6M26 16H30" stroke="currentColor" strokeWidth="2" className="text-cyan-800" />
+    <text x="16" y="20" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="monospace">1A</text>
+  </svg>
+);
+
+// --- Background Component ---
+const CyberBackground = () => (
+  <div className="fixed inset-0 pointer-events-none z-0 opacity-20 overflow-hidden">
+    <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-cyan-900"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#grid)" />
+      {/* Decorative circles */}
+      <circle cx="10%" cy="20%" r="100" fill="url(#grid)" className="text-cyan-800/20" />
+      <circle cx="90%" cy="80%" r="150" fill="url(#grid)" className="text-cyan-800/20" />
+    </svg>
+  </div>
+);
+
+
 // --- Sub-component for Game Rules ---
 const GameRules = ({ className }: { className?: string }) => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className={`bg-slate-800/60 border border-slate-700 rounded-lg overflow-hidden transition-all ${className}`}>
+    <div className={`bg-slate-800/60 border border-slate-700 rounded-lg overflow-hidden transition-all z-10 relative ${className}`}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between p-3 text-slate-300 hover:bg-slate-800 hover:text-cyan-400 transition-colors"
@@ -50,27 +78,74 @@ const GameRules = ({ className }: { className?: string }) => {
               <h3 className="text-slate-200 font-bold mb-1">🎯 遊戲目標</h3>
               <p>猜出系統產生的一組 <span className="text-cyan-400 font-mono">4</span> 位不重複數字（例如：1234）。</p>
             </div>
-            <div>
-              <h3 className="text-slate-200 font-bold mb-1">🔍 提示說明</h3>
-              <ul className="space-y-1.5">
-                <li className="flex items-start gap-2">
-                  <span className="bg-green-900/40 text-green-400 font-bold px-1.5 rounded text-xs font-mono">A</span>
-                  <span><strong className="text-slate-300">位置正確</strong>：數字對了，位置也對了。</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="bg-yellow-900/40 text-yellow-400 font-bold px-1.5 rounded text-xs font-mono">B</span>
-                  <span><strong className="text-slate-300">位置錯誤</strong>：數字對了，但位置不對。</span>
-                </li>
-              </ul>
+            
+            {/* Visual Diagram */}
+            <div className="my-2 p-2 bg-slate-800/80 rounded border border-slate-700/50 overflow-hidden flex justify-center">
+              <svg viewBox="0 0 300 130" className="w-full max-w-[280px] h-auto font-mono select-none">
+                <defs>
+                  <marker id="arrow-green" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                    <path d="M0,0 L6,3 L0,6" fill="#4ade80" />
+                  </marker>
+                  <marker id="arrow-yellow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                    <path d="M0,0 L6,3 L0,6" fill="#facc15" />
+                  </marker>
+                </defs>
+
+                {/* Secret Row */}
+                <text x="0" y="25" fill="#94a3b8" fontSize="12" fontWeight="bold">謎底</text>
+                <g transform="translate(60, 5)">
+                  <rect x="0" y="0" width="30" height="30" rx="4" fill="#1e293b" stroke="#334155" />
+                  <text x="15" y="20" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">5</text>
+                  
+                  <rect x="40" y="0" width="30" height="30" rx="4" fill="#1e293b" stroke="#334155" />
+                  <text x="55" y="20" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">6</text>
+                  
+                  <rect x="80" y="0" width="30" height="30" rx="4" fill="#1e293b" stroke="#334155" />
+                  <text x="95" y="20" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">7</text>
+                  
+                  <rect x="120" y="0" width="30" height="30" rx="4" fill="#1e293b" stroke="#334155" />
+                  <text x="135" y="20" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">8</text>
+                </g>
+
+                {/* Guess Row */}
+                <text x="0" y="105" fill="#94a3b8" fontSize="12" fontWeight="bold">猜測</text>
+                <g transform="translate(60, 85)">
+                  <rect x="0" y="0" width="30" height="30" rx="4" fill="#1e293b" stroke="#334155" />
+                  <text x="15" y="20" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">5</text>
+                  
+                  <rect x="40" y="0" width="30" height="30" rx="4" fill="#1e293b" stroke="#334155" />
+                  <text x="55" y="20" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">7</text>
+                  
+                  <rect x="80" y="0" width="30" height="30" rx="4" fill="#1e293b" stroke="#334155" />
+                  <text x="95" y="20" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">2</text>
+                  
+                  <rect x="120" y="0" width="30" height="30" rx="4" fill="#1e293b" stroke="#334155" />
+                  <text x="135" y="20" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">1</text>
+                </g>
+
+                {/* Connections */}
+                {/* 5 -> 5 (Green, A) */}
+                <path d="M75,35 L75,85" stroke="#4ade80" strokeWidth="2" markerEnd="url(#arrow-green)" strokeDasharray="4"/>
+                <circle cx="75" cy="60" r="10" fill="#14532d" stroke="#4ade80" strokeWidth="1" />
+                <text x="75" y="64" textAnchor="middle" fill="#4ade80" fontSize="10" fontWeight="bold">A</text>
+
+                {/* 7 -> 7 (Yellow, B) */}
+                <path d="M155,35 L115,85" stroke="#facc15" strokeWidth="2" markerEnd="url(#arrow-yellow)" strokeDasharray="4"/>
+                <circle cx="135" cy="60" r="10" fill="#713f12" stroke="#facc15" strokeWidth="1" />
+                <text x="135" y="64" textAnchor="middle" fill="#facc15" fontSize="10" fontWeight="bold">B</text>
+
+                {/* Explanation text */}
+                <text x="210" y="55" fill="#4ade80" fontSize="11" fontWeight="bold">位置正確</text>
+                <text x="210" y="75" fill="#facc15" fontSize="11" fontWeight="bold">數字對但位置錯</text>
+              </svg>
             </div>
-            <div className="bg-slate-800/50 p-2 rounded border border-slate-700/50">
-              <p className="font-bold text-slate-300 mb-1">💡 舉例：</p>
-              <p>正確答案是 <span className="font-mono text-white">5678</span></p>
-              <p>你猜 <span className="font-mono text-white">5721</span> → 得到 <span className="font-mono text-green-400">1A</span><span className="font-mono text-yellow-400">1B</span></p>
-              <ul className="ml-4 mt-1 list-disc list-outside opacity-80">
-                <li><span className="font-mono">5</span> 位置對了 (1A)</li>
-                <li><span className="font-mono">7</span> 有這個數但位置錯了 (1B)</li>
-              </ul>
+
+            <div>
+              <h3 className="text-slate-200 font-bold mb-1">💡 文字舉例</h3>
+              <div className="bg-slate-800/50 p-2 rounded border border-slate-700/50">
+                <p>謎底 <span className="font-mono text-white">5678</span>，猜 <span className="font-mono text-white">5721</span></p>
+                <p className="mt-1">結果：<span className="font-mono text-green-400 font-bold">1A</span><span className="font-mono text-yellow-400 font-bold">1B</span></p>
+              </div>
             </div>
           </div>
         </div>
@@ -85,19 +160,85 @@ const PositionalAnalysis = ({ possibleAnswers }: { possibleAnswers: string[] }) 
 
   return (
     <div className="space-y-2">
-       <p className="text-[10px] text-slate-400 mb-1 text-center">各位數可能的數字</p>
        <div className="grid grid-cols-4 gap-1.5">
          {positionalData.map((digits, idx) => (
-           <div key={idx} className="bg-slate-900/50 border border-slate-700/50 rounded p-2 text-center flex flex-col h-full">
-             <div className="text-[10px] text-slate-500 mb-1 font-bold border-b border-slate-800 pb-1">第 {idx + 1} 位</div>
+           <div key={idx} className="bg-slate-900/50 border border-slate-700/50 rounded p-1.5 text-center flex flex-col h-full">
+             <div className="text-[9px] text-slate-500 mb-0.5 font-bold border-b border-slate-800 pb-0.5">第 {idx + 1} 位</div>
              <div className="flex-1 flex items-center justify-center">
-                <div className="text-cyan-300 font-mono text-sm font-bold leading-snug break-all">
+                <div className="text-cyan-300 font-mono text-xs font-bold leading-snug break-all">
                   {digits.join(' ')}
                 </div>
              </div>
            </div>
          ))}
        </div>
+    </div>
+  );
+};
+
+// --- Reusable Game Review List Component ---
+const GameReviewList = ({ guesses }: { guesses: GuessResult[] }) => {
+  const [reviewData, setReviewData] = useState<ReviewStep[]>([]);
+
+  useEffect(() => {
+    const data = generateGameReview(guesses);
+    setReviewData(data);
+  }, [guesses]);
+
+  return (
+    <div className="space-y-3 pb-8">
+        <div className="flex items-center gap-2 mb-2 text-cyan-400 px-1 justify-center">
+             <BrainIcon />
+             <h3 className="font-bold text-sm uppercase tracking-wider">推導過程回顧</h3>
+        </div>
+       {reviewData.map((step) => (
+         <div key={step.stepIndex} className="bg-slate-900/40 rounded-xl p-3 border border-slate-700/50 relative overflow-hidden group">
+            <div className="flex justify-between items-start mb-2 relative z-10">
+               <div className="flex items-center gap-3">
+                  <span className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-xs text-slate-400 font-mono border border-slate-600">
+                    {step.stepIndex}
+                  </span>
+                  <span className="font-mono text-lg font-bold text-white tracking-wider">
+                    {step.guess}
+                  </span>
+                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
+                    step.result === '4A0B' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                  }`}>
+                    {step.result}
+                  </span>
+               </div>
+               <div className="text-right">
+                  <span className="text-xs font-bold text-cyan-300 block bg-cyan-900/30 px-2 py-0.5 rounded-full border border-cyan-800/30">
+                    {step.comment}
+                  </span>
+               </div>
+            </div>
+
+            {/* Insight Text - Enhanced */}
+            <div className="relative z-10 bg-slate-800/50 rounded p-2 mb-2 text-xs text-slate-300 leading-relaxed border border-white/5">
+               {step.insight}
+            </div>
+
+            <div className="relative z-10 flex justify-between items-end text-[10px] text-slate-400 opacity-80 mt-1">
+               <div className="font-mono">
+                 剩餘: <span className="text-white font-bold">{step.candidatesAfter}</span>
+               </div>
+               <div className="font-bold">
+                 <span className={`${step.reductionPercent > 50 ? 'text-emerald-400' : 'text-slate-400'}`}>
+                   -{step.reductionPercent.toFixed(1)}%
+                 </span>
+               </div>
+            </div>
+            
+            {/* Visual Bar at bottom */}
+            <div className="absolute bottom-0 left-0 h-0.5 bg-slate-700/30 w-full mt-2">
+               <div 
+                 className="h-full bg-gradient-to-r from-cyan-500 to-emerald-400 transition-all duration-500" 
+                 style={{ width: `${step.reductionPercent}%` }}
+               ></div>
+            </div>
+         </div>
+       ))}
     </div>
   );
 };
@@ -136,7 +277,10 @@ const App: React.FC = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = 0;
     }
-  }, [gameState.guesses]);
+  }, [gameState.guesses, gameState.status]);
+
+  // Logic: Hints only show in Easy Mode AFTER 3 guesses have been made (guesses.length >= 3)
+  const showHints = difficulty === 'easy' && gameState.guesses.length >= 3;
 
   // Calculate impossible digits
   const impossibleDigits = useMemo(() => {
@@ -146,6 +290,11 @@ const App: React.FC = () => {
   // Calculate confirmed positions
   const confirmedPositions = useMemo(() => {
     return getConfirmedPositions(gameState.possibleAnswers);
+  }, [gameState.possibleAnswers]);
+
+  // Calculate digit probabilities
+  const digitProbabilities = useMemo(() => {
+    return getDigitProbabilities(gameState.possibleAnswers);
   }, [gameState.possibleAnswers]);
 
   const handleDigitClick = (digit: string) => {
@@ -192,7 +341,7 @@ const App: React.FC = () => {
       {[0, 1, 2, 3].map((idx) => (
         <div 
           key={idx}
-          className={`flex items-center justify-center font-mono rounded-full border-2 transition-all
+          className={`flex items-center justify-center font-mono rounded-full border-2 transition-all z-10
             ${compact ? 'w-10 h-10 text-xl' : 'w-14 h-14 text-3xl'}
             ${currentInput[idx] 
               ? 'border-cyan-500 bg-cyan-900/20 text-white shadow-[0_0_15px_rgba(6,182,212,0.3)]' 
@@ -204,282 +353,259 @@ const App: React.FC = () => {
     </div>
   );
 
-  const GameHistory = ({ compact = false }: { compact?: boolean }) => (
-    <div className={gameState.guesses.length === 0 ? "" : "grid grid-cols-2 gap-2 content-start"}>
-      {gameState.guesses.length === 0 ? (
-        <div className="h-48 flex flex-col items-center justify-center text-slate-500 gap-2 opacity-50">
-          <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-600 text-lg font-bold">?</div>
-          <p className="text-sm">尚未開始猜測</p>
-        </div>
-      ) : (
-        // REVERSE ORDER: Newest first
-        [...gameState.guesses].reverse().map((g, idx) => {
-          // Calculate the original index number for display (e.g., #1, #2)
-          const realIndex = gameState.guesses.length - idx;
-          const isLatest = idx === 0;
-
-          return (
-            <div 
-              key={idx} 
-              className={`
-                relative flex items-center justify-between rounded-lg border transition-all duration-300
-                ${compact ? 'p-2' : 'p-3'}
-                ${isLatest 
-                  ? 'bg-cyan-950/40 border-cyan-400/80 shadow-[inset_0_0_10px_rgba(6,182,212,0.1)]' 
-                  : 'bg-slate-700/30 border-slate-700/50 opacity-80 hover:opacity-100'}
-              `}
-            >
-              {/* Highlight Badge for Latest */}
-              {isLatest && (
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-cyan-400 rounded-full shadow-[0_0_8px_rgba(34,211,238,0.8)] animate-pulse"></div>
-              )}
-
-              <div className="flex items-center gap-2 min-w-0">
-                <span className={`text-[10px] font-mono w-4 text-right ${isLatest ? 'text-cyan-300' : 'text-slate-500'}`}>
-                  #{realIndex}
-                </span>
-                <span className={`font-mono font-bold tracking-wider ${isLatest ? 'text-cyan-50' : 'text-slate-200'} ${compact ? 'text-base' : 'text-lg'}`}>
-                  {g.guess}
-                </span>
+  const GameHistory = ({ compact = false }: { compact?: boolean }) => {
+    const reversedGuesses = [...gameState.guesses].reverse();
+    return (
+      <div className={gameState.guesses.length === 0 ? "" : "grid grid-cols-2 gap-2 content-start relative z-10"}>
+        {gameState.guesses.length === 0 ? (
+          <div className="h-48 flex flex-col items-center justify-center text-slate-600">
+            <HistoryIcon />
+            <p className="mt-2 text-sm">尚未有猜測紀錄</p>
+          </div>
+        ) : (
+          reversedGuesses.map((g, index) => {
+            // "Latest" is the first element because we reversed the array
+            const isLatest = index === 0;
+            return (
+              <div 
+                key={index} 
+                className={`
+                  flex items-center justify-between p-2 rounded-lg border font-mono animate-in fade-in slide-in-from-top-4 duration-300 fill-mode-backwards
+                  ${compact ? 'text-sm' : 'text-base'}
+                  ${isLatest 
+                    ? 'bg-cyan-900/30 border-cyan-500/50 shadow-[0_0_10px_rgba(34,211,238,0.2)]' 
+                    : 'bg-slate-800/60 border-slate-700/50 text-slate-400'
+                  }
+                `}
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <div className="flex items-center gap-2">
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${isLatest ? 'bg-cyan-800 text-cyan-200' : 'bg-slate-700 text-slate-500'}`}>
+                     {gameState.guesses.length - index}
+                  </span>
+                  <span className={`${isLatest ? 'text-cyan-100 font-bold' : ''}`}>{g.guess}</span>
+                </div>
+                <div className={`font-bold tracking-widest px-2 py-0.5 rounded ${
+                  g.a === 4 
+                    ? 'bg-green-500 text-white shadow-[0_0_10px_rgba(34,199,89,0.5)]' 
+                    : isLatest
+                      ? 'bg-slate-900/50 text-cyan-300'
+                      : 'bg-slate-900/30 text-slate-300'
+                }`}>
+                  {g.a}A{g.b}B
+                </div>
               </div>
-              
-              <div className={`px-1.5 py-0.5 rounded font-bold font-mono text-xs whitespace-nowrap
-                ${g.a === 4 ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 
-                  g.a > 0 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 
-                  'bg-slate-600/50 text-slate-400'}`}>
-                {g.a}A{g.b}B
-              </div>
-            </div>
-          );
-        })
-      )}
-      {/* Spacer for scrolling visibility */}
-      <div className="h-2 col-span-2"></div>
-    </div>
-  );
+            );
+          })
+        )}
+      </div>
+    );
+  };
 
-  const AnalysisPanel = () => (
-    <div className="space-y-6">
-      {/* Stats */}
+  const AnalysisPanel = ({ isMobile = false }) => (
+    <div className={`space-y-3 ${isMobile ? 'text-sm' : ''} relative z-10`}>
+      {/* Clean Stats */}
       <GameStats 
         remainingCount={gameState.possibleAnswers.length} 
         totalCombinations={5040} 
       />
 
-      {/* Possible Answers Analysis - Only show in Easy Mode */}
-      {difficulty === 'easy' ? (
-        <div className="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden">
-          <div className="p-3 bg-slate-900/50 border-b border-slate-700">
-            <h2 className="font-bold text-slate-200 text-sm">答案分析</h2>
-            <p className="text-[10px] text-slate-400 mt-1">
-              {gameState.possibleAnswers.length < 50 ? "詳細位數分析" : "剩餘少於 50 個時顯示詳細資訊"}
-            </p>
+      {/* Hints (Positional ONLY) - Simplified Logic: Show if unlocked AND useful (<=50) */}
+      {showHints && gameState.possibleAnswers.length <= 50 && (
+          <div className="animate-in fade-in duration-500 pt-1">
+             <PositionalAnalysis possibleAnswers={gameState.possibleAnswers} />
           </div>
-          
-          <div className="p-3">
-            {gameState.possibleAnswers.length < 50 && gameState.possibleAnswers.length > 0 ? (
-               <PositionalAnalysis possibleAnswers={gameState.possibleAnswers} />
-            ) : (
-              <div className="flex flex-col items-center justify-center text-slate-500 text-center py-4 min-h-[100px]">
-                <div className="text-2xl font-bold text-slate-700 mb-1">{gameState.possibleAnswers.length}</div>
-                <p className="text-xs">組合過多，尚無詳細分析</p>
-              </div>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 text-center">
-          <p className="text-slate-400 text-sm mb-1">困難模式</p>
-          <p className="text-xs text-slate-500">已隱藏答案分析</p>
-        </div>
       )}
     </div>
   );
 
-  const DifficultyButton = () => (
-    <button 
-      onClick={toggleDifficulty}
-      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all
-        ${difficulty === 'easy' 
-          ? 'bg-cyan-900/30 text-cyan-300 border-cyan-600/50 hover:bg-cyan-900/50 shadow-[0_0_10px_rgba(6,182,212,0.1)]' 
-          : 'bg-red-900/30 text-red-300 border-red-600/50 hover:bg-red-900/50 shadow-[0_0_10px_rgba(239,68,68,0.1)]'}`}
-    >
-      <BrainIcon />
-      <span>{difficulty === 'easy' ? '簡單' : '困難'}</span>
-    </button>
+  const WinHeader = () => (
+      <div className="bg-gradient-to-br from-green-500/20 to-emerald-900/20 border border-green-500/30 rounded-2xl p-4 text-center animate-in zoom-in duration-300 backdrop-blur-sm mb-4">
+        <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-2 shadow-[0_0_20px_rgba(34,197,94,0.4)]">
+          <span className="text-2xl">🎉</span>
+        </div>
+        <h2 className="text-xl font-bold text-green-400">破解成功！</h2>
+        <p className="text-slate-300">謎底是 <span className="text-white font-mono text-lg font-bold mx-1">{gameState.secret}</span></p>
+        <p className="text-xs text-slate-400">總共猜了 <span className="text-white font-bold">{gameState.guesses.length}</span> 次</p>
+      </div>
   );
 
-  // --- Main Layout ---
+  // --- Mobile Layout ---
+  const MobileLayout = () => (
+    <div className="flex flex-col h-[100dvh] bg-slate-900 text-slate-100 overflow-hidden relative">
+      <CyberBackground />
+      {/* Header */}
+      <header className="flex-none p-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex justify-between items-center z-20">
+        <div className="flex items-center gap-2">
+          <GameLogo />
+          <h1 className="font-bold text-lg tracking-wider text-cyan-50">1A2B</h1>
+        </div>
+        <button 
+          onClick={toggleDifficulty}
+          className={`px-3 py-1 rounded-full text-xs font-bold transition-all border ${
+            difficulty === 'easy' 
+              ? 'bg-cyan-900/50 text-cyan-300 border-cyan-700' 
+              : 'bg-red-900/50 text-red-300 border-red-700'
+          }`}
+        >
+          {difficulty === 'easy' ? '簡單' : '困難'}
+        </button>
+      </header>
 
-  return (
-    <div className="bg-slate-900 text-slate-100 min-h-screen selection:bg-cyan-500 selection:text-white font-sans">
-      
-      {/* ================= MOBILE LAYOUT (< 1024px) ================= */}
-      <div className="lg:hidden h-[100dvh] flex flex-col overflow-hidden">
-        
-        {/* Mobile Header */}
-        <header className="flex-none flex justify-between items-center p-3 bg-slate-800 border-b border-slate-700 z-20">
-          <div className="flex items-center gap-2">
-            <div className={`w-7 h-7 rounded flex items-center justify-center text-white font-bold text-xs shadow-lg transition-colors ${difficulty === 'easy' ? 'bg-cyan-500 shadow-cyan-500/20' : 'bg-red-500 shadow-red-500/20'}`}>
-              1A
-            </div>
-            <h1 className="text-base font-bold text-white tracking-tight">猜數字大師</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <DifficultyButton />
+      {gameState.status === 'won' ? (
+        // --- Win State Layout (Mobile) ---
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col z-10">
+          <WinHeader />
+          <GameReviewList guesses={gameState.guesses} />
+          
+          <div className="mt-auto pt-4 sticky bottom-0 bg-slate-900/90 p-4 border-t border-slate-800 -mx-4">
             <button
               onClick={startNewGame}
-              className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-full text-slate-200 transition-colors"
+              className="w-full py-4 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-lg shadow-[0_0_20px_rgba(8,145,178,0.5)] transition-all active:scale-95"
             >
-              <RefreshIcon />
+              再來一局
             </button>
           </div>
-        </header>
-
-        {/* Mobile Stats Bar (Fixed below header) */}
-        <div className="flex-none bg-slate-800/80 backdrop-blur-sm border-b border-slate-700 px-3 py-2 flex justify-between items-center text-xs z-10">
-           <div className="flex gap-3 w-full justify-center">
-             <span className="text-slate-400">剩餘 <span className="text-cyan-400 font-mono text-sm">{gameState.possibleAnswers.length}</span></span>
-             <span className="text-slate-300">|</span>
-             <span className="text-slate-400">排除 <span className="text-emerald-400 font-mono text-sm">{Math.round((1 - gameState.possibleAnswers.length / 5040) * 100)}%</span></span>
-           </div>
         </div>
-
-        {/* Mobile Content Area (Scrollable) */}
-        <div className="flex-1 overflow-y-auto bg-slate-900 scroll-smooth" ref={scrollRef}>
-          <div className="p-3 pb-4 space-y-3">
-            
-            {/* Game Rules (Mobile) - Hidden after first guess */}
-            {gameState.guesses.length === 0 && <GameRules />}
-
-            {/* Possible Answers (Easy Mode only) - MOBILE VIEW - ALWAYS VISIBLE AT TOP */}
-            {difficulty === 'easy' && gameState.possibleAnswers.length < 50 && gameState.possibleAnswers.length > 0 && (
-              <div className="bg-emerald-900/10 border border-emerald-900/30 rounded-lg p-2">
-                 <PositionalAnalysis possibleAnswers={gameState.possibleAnswers} />
-              </div>
-            )}
-
-            <GameHistory compact={true} />
+      ) : (
+        // --- Playing State Layout (Mobile) ---
+        <>
+          <div className="flex-none bg-slate-900/80 z-20 px-4 py-2 border-b border-slate-800">
+             <AnalysisPanel isMobile />
           </div>
-        </div>
 
-        {/* Mobile Fixed Bottom Input Area */}
-        <div className="flex-none bg-slate-800 border-t border-slate-700 p-2 pb-3 shadow-[0_-4px_20px_rgba(0,0,0,0.4)] z-30">
-          {gameState.status === 'won' ? (
-            <div className="text-center py-3 animate-bounce">
-              <h2 className="text-xl font-bold text-green-400 mb-1">你贏了！</h2>
-              <p className="text-slate-400 text-xs">答案是 <span className="font-mono text-white font-bold text-base">{gameState.secret}</span></p>
+          <div 
+            ref={scrollRef}
+            className="flex-1 overflow-y-auto p-3 scroll-smooth z-10"
+          >
+             {gameState.guesses.length === 0 && (
+                <GameRules className="mb-4" />
+             )}
+             <GameHistory compact />
+          </div>
+
+          <div className="flex-none bg-slate-900/95 border-t border-slate-800 p-3 z-30 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
+             <InputDisplay compact />
+             <NumberPad 
+               onDigitClick={handleDigitClick}
+               onDelete={handleDelete}
+               onSubmit={handleSubmitGuess}
+               disabled={gameState.status !== 'playing'}
+               currentLength={currentInput.length}
+               impossibleDigits={showHints ? impossibleDigits : []}
+               confirmedPositions={showHints ? confirmedPositions : {}}
+               digitProbabilities={showHints ? digitProbabilities : {}}
+               compact
+             />
+          </div>
+        </>
+      )}
+    </div>
+  );
+
+  // --- Desktop Layout ---
+  const DesktopLayout = () => (
+    <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-8 relative">
+      <CyberBackground />
+      <div className="w-full max-w-5xl grid grid-cols-12 gap-8 relative z-10">
+        {/* Left Column: Game Area */}
+        <div className="col-span-7 bg-slate-800/50 backdrop-blur-sm rounded-3xl p-8 border border-slate-700 shadow-2xl flex flex-col min-h-[600px]">
+          <header className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-3">
+              <GameLogo />
+              <h1 className="text-3xl font-bold tracking-wider text-white">1A2B <span className="text-cyan-400">Master</span></h1>
+            </div>
+            <div className="flex gap-2">
+              <button 
+                onClick={toggleDifficulty}
+                className={`px-4 py-1.5 rounded-full text-sm font-bold transition-all border ${
+                  difficulty === 'easy' 
+                    ? 'bg-cyan-900/50 text-cyan-300 border-cyan-700 hover:bg-cyan-800' 
+                    : 'bg-red-900/50 text-red-300 border-red-700 hover:bg-red-800'
+                }`}
+              >
+                {difficulty === 'easy' ? '簡單模式' : '困難模式'}
+              </button>
               <button 
                 onClick={startNewGame}
-                className="mt-2 px-5 py-1.5 bg-green-600 text-white rounded-full hover:bg-green-500 font-bold text-sm shadow-lg shadow-green-600/30"
+                className="p-2 rounded-full hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                title="重新開始"
               >
-                再玩一次
+                <RefreshIcon />
               </button>
+            </div>
+          </header>
+
+          {gameState.status === 'won' ? (
+            <div className="flex-1 flex flex-col items-center justify-center animate-in zoom-in duration-300">
+               <WinHeader />
+               <div className="w-full max-w-md h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                  <GameReviewList guesses={gameState.guesses} />
+               </div>
+               <button
+                  onClick={startNewGame}
+                  className="mt-6 px-12 py-3 rounded-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xl shadow-[0_0_20px_rgba(8,145,178,0.5)] transition-all active:scale-95"
+                >
+                  再來一局
+                </button>
             </div>
           ) : (
             <>
-              <InputDisplay compact={true} />
-              <NumberPad
-                onDigitClick={handleDigitClick}
-                onDelete={handleDelete}
-                onSubmit={handleSubmitGuess}
-                disabled={gameState.status !== 'playing'}
-                currentLength={currentInput.length}
-                // Pass filtered hints based on difficulty
-                impossibleDigits={difficulty === 'easy' ? impossibleDigits : []}
-                confirmedPositions={difficulty === 'easy' ? confirmedPositions : {}}
-                compact={true}
-              />
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* ================= DESKTOP LAYOUT (>= 1024px) ================= */}
-      <div className="hidden lg:flex flex-col items-center p-8 max-w-6xl mx-auto min-h-screen">
-        
-        {/* Header */}
-        <header className="w-full flex justify-between items-center mb-6 bg-slate-800/50 p-4 rounded-2xl backdrop-blur-sm border border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold shadow-lg transition-colors ${difficulty === 'easy' ? 'bg-cyan-500 shadow-cyan-500/20' : 'bg-red-500 shadow-red-500/20'}`}>
-              1A
-            </div>
-            <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight">1A2B 猜數字大師</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <DifficultyButton />
-            <button
-              onClick={startNewGame}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-full text-sm font-medium transition-colors"
-            >
-              <RefreshIcon />
-              <span>新遊戲</span>
-            </button>
-          </div>
-        </header>
-
-        {/* Game Rules (Desktop) - Hidden after first guess */}
-        {gameState.guesses.length === 0 && (
-          <div className="w-full mb-6">
-            <GameRules />
-          </div>
-        )}
-
-        <div className="grid grid-cols-3 gap-6 w-full items-start">
-          
-          {/* Left Column: Game Input & Status */}
-          <div className="col-span-1 flex flex-col gap-6 sticky top-8">
-            <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
-              <div className="text-center mb-4">
-                 <p className="text-slate-400 text-sm mb-4">請輸入 4 個不重複數字</p>
-                 <InputDisplay />
+              {gameState.guesses.length === 0 && <GameRules className="mb-6" />}
+              
+              <div className="flex-1 bg-slate-900/50 rounded-2xl p-4 mb-6 border border-slate-700/50 overflow-y-auto max-h-[400px]">
+                <GameHistory />
               </div>
 
-              {gameState.status === 'won' ? (
-                <div className="text-center py-8">
-                  <h2 className="text-3xl font-bold text-green-400 mb-2">恭喜勝利！</h2>
-                  <p className="text-slate-400 mb-6">答案是 <span className="font-mono text-white font-bold text-xl">{gameState.secret}</span></p>
-                  <button 
-                    onClick={startNewGame}
-                    className="px-8 py-3 bg-green-600 text-white rounded-xl hover:bg-green-500 font-bold shadow-lg shadow-green-600/20 transition-all transform hover:scale-105"
-                  >
-                    再玩一次
-                  </button>
-                </div>
-              ) : (
-                <NumberPad
+              <div className="mt-auto">
+                <InputDisplay />
+                <NumberPad 
                   onDigitClick={handleDigitClick}
                   onDelete={handleDelete}
                   onSubmit={handleSubmitGuess}
                   disabled={gameState.status !== 'playing'}
                   currentLength={currentInput.length}
-                  // Pass filtered hints based on difficulty
-                  impossibleDigits={difficulty === 'easy' ? impossibleDigits : []}
-                  confirmedPositions={difficulty === 'easy' ? confirmedPositions : {}}
+                  impossibleDigits={showHints ? impossibleDigits : []}
+                  confirmedPositions={showHints ? confirmedPositions : {}}
+                  digitProbabilities={showHints ? digitProbabilities : {}}
                 />
-              )}
-            </div>
-          </div>
+              </div>
+            </>
+          )}
+        </div>
 
-          {/* Middle Column: History */}
-          <div className="col-span-1 flex flex-col gap-6">
-            <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl min-h-[500px]">
-              <h2 className="flex items-center gap-2 font-bold text-slate-300 mb-4 uppercase tracking-wider text-sm">
-                <HistoryIcon />
-                猜測紀錄
-              </h2>
-              <GameHistory />
-            </div>
-          </div>
-
-          {/* Right Column: Stats */}
-          <div className="col-span-1 flex flex-col gap-6 sticky top-8">
-            <AnalysisPanel />
-          </div>
-          
+        {/* Right Column: Analysis Panel (Only visible in playing mode) */}
+        <div className="col-span-5 space-y-6">
+           {gameState.status === 'playing' ? (
+             <div className="bg-slate-800/50 backdrop-blur-sm rounded-3xl p-6 border border-slate-700 shadow-xl sticky top-8">
+               <h2 className="text-xl font-bold text-slate-200 mb-4 flex items-center gap-2">
+                 <BrainIcon /> 戰況分析
+               </h2>
+               <AnalysisPanel />
+             </div>
+           ) : (
+             // Decorative placeholder for win state
+             <div className="bg-slate-800/30 backdrop-blur-sm rounded-3xl p-6 border border-slate-700/50 h-full flex items-center justify-center text-slate-600">
+                <div className="text-center opacity-50">
+                   <GameLogo />
+                   <p className="mt-4 text-sm font-mono">SYSTEM DECRYPTED</p>
+                </div>
+             </div>
+           )}
         </div>
       </div>
     </div>
+  );
+
+  return (
+    <>
+      <div className="md:hidden">
+        <MobileLayout />
+      </div>
+      <div className="hidden md:block">
+        <DesktopLayout />
+      </div>
+    </>
   );
 };
 

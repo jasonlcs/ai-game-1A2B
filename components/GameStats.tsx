@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface GameStatsProps {
@@ -6,17 +7,22 @@ interface GameStatsProps {
 }
 
 const GameStats: React.FC<GameStatsProps> = ({ remainingCount, totalCombinations }) => {
-  const percentLeft = ((remainingCount / totalCombinations) * 100).toFixed(2);
+  const percentLeft = (remainingCount / totalCombinations) * 100;
+  const percentExcluded = 100 - percentLeft;
   
   return (
-    <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 mb-4 flex justify-between items-center shadow-inner">
-      <div>
-        <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">剩餘組合</p>
-        <p className="text-2xl font-mono text-cyan-400">{remainingCount}</p>
+    <div className="flex flex-col gap-1 w-full animate-in fade-in duration-500">
+      <div className="flex justify-between items-center text-[10px] md:text-xs font-mono uppercase tracking-wider text-slate-500">
+         <span>剩餘: <span className="text-cyan-400 font-bold">{remainingCount}</span></span>
+         <span>排除: <span className="text-emerald-400 font-bold">{percentExcluded.toFixed(1)}%</span></span>
       </div>
-      <div className="text-right">
-        <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">已排除</p>
-        <p className="text-xl font-mono text-emerald-400">{100 - parseFloat(percentLeft)}%</p>
+      
+      {/* Slim Progress Bar */}
+      <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+        <div 
+          className="h-full bg-cyan-500 shadow-[0_0_5px_rgba(6,182,212,0.5)] transition-all duration-700 ease-out"
+          style={{ width: `${percentExcluded}%` }}
+        ></div>
       </div>
     </div>
   );

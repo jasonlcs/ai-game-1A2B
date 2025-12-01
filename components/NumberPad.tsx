@@ -39,23 +39,24 @@ const NumberPad: React.FC<NumberPadProps> = ({
 
     // Define visual tiers
     let tierClasses = '';
-
+    
     if (!isBtnDisabled && !isConfirmed) {
       if (showProbabilities) {
         // --- Easy Mode (Probability Colors) ---
         if (probability >= 0.4) {
-          // TIER 1: HIGH PROBABILITY (>40%) - GOLD
-          tierClasses = 'bg-amber-400 border-amber-300 text-black shadow-[0_0_10px_rgba(251,191,36,0.4)] font-black z-10 ring-2 ring-amber-300/50';
+          // TIER 1: HIGH PROBABILITY - GOLD (Amber)
+          tierClasses = 'bg-gradient-to-br from-amber-300 to-amber-500 text-neutral-900 font-bold border-amber-300 shadow-[0_0_15px_rgba(251,191,36,0.3)] ring-1 ring-amber-200/50';
         } else if (probability >= 0.15) {
-          // TIER 2: MEDIUM PROBABILITY (15% - 40%) - EMERALD GREEN
-          tierClasses = 'bg-emerald-700 border-emerald-600 text-white font-bold shadow-[0_0_5px_rgba(16,185,129,0.3)]';
+          // TIER 2: MEDIUM PROBABILITY - GREEN (Emerald)
+          tierClasses = 'bg-emerald-800 text-emerald-100 border-emerald-600 shadow-[0_0_10px_rgba(16,185,129,0.1)]';
         } else {
-          // TIER 3: LOW PROBABILITY (<15%) - DARK GREY
-          tierClasses = 'bg-slate-800 border-slate-700 text-slate-500 hover:bg-slate-700';
+          // TIER 3: LOW PROBABILITY - GREY (Brighter Slate)
+          tierClasses = 'bg-slate-700 text-slate-300 border-slate-600';
         }
       } else {
-        // --- Smart Mode / Hard Mode (Neutral Colors) ---
-        tierClasses = 'bg-slate-700 border-slate-600 text-slate-200 hover:bg-slate-600 hover:border-slate-500 hover:text-white shadow-sm font-semibold';
+        // --- Smart / Hard Mode (Neutral Luxury) ---
+        // Elegant glassmorphism - Brightened for visibility
+        tierClasses = 'bg-neutral-800 border-white/20 text-white hover:bg-neutral-700 hover:border-amber-500/40 hover:text-amber-100 shadow-sm backdrop-blur-sm';
       }
     }
 
@@ -66,13 +67,14 @@ const NumberPad: React.FC<NumberPadProps> = ({
           onClick={() => onDigitClick(digit)}
           disabled={isBtnDisabled}
           className={`
-            relative flex items-center justify-center rounded-full aspect-square w-full border transition-all duration-200
+            relative flex items-center justify-center rounded-full aspect-square w-full border transition-all duration-300 ease-out
             ${compact ? 'text-xl' : 'text-3xl'}
+            font-mono
             ${isBtnDisabled 
-              ? 'bg-slate-900/40 text-slate-800 border-slate-800/30 shadow-none cursor-not-allowed opacity-60' 
+              ? 'bg-neutral-900/30 text-neutral-600 border-transparent shadow-none cursor-not-allowed' 
               : isConfirmed
-                ? 'bg-purple-600 text-white border-purple-400 shadow-[0_0_10px_rgba(147,51,234,0.5)] ring-1 ring-purple-400 z-20 font-black scale-105'
-                : `${tierClasses} hover:brightness-110 active:scale-95`
+                ? 'bg-indigo-800 text-indigo-100 border-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.4)] ring-1 ring-indigo-400 z-20 font-bold scale-105'
+                : `${tierClasses} hover:scale-105 active:scale-95`
             }
           `}
         >
@@ -80,7 +82,7 @@ const NumberPad: React.FC<NumberPadProps> = ({
           
           {/* Confirmed Position Badge */}
           {isConfirmed && (
-            <span className={`absolute -top-1 -right-1 flex items-center justify-center bg-purple-500 text-white rounded-full font-bold shadow-sm border border-purple-300 ${compact ? 'w-4 h-4 text-[9px]' : 'w-6 h-6 text-xs'}`}>
+            <span className={`absolute -top-1 -right-1 flex items-center justify-center bg-indigo-500 text-white rounded-full font-serif font-bold shadow-lg border border-indigo-300 ${compact ? 'w-4 h-4 text-[9px]' : 'w-6 h-6 text-xs'}`}>
               {confirmedPos + 1}
             </span>
           )}
@@ -90,23 +92,30 @@ const NumberPad: React.FC<NumberPadProps> = ({
   };
 
   return (
-    <div className={`mx-auto w-full ${compact ? 'max-w-[280px]' : 'max-w-[380px]'} ${compact ? 'mt-0' : 'mt-4'}`}>
+    <div className={`mx-auto w-full ${compact ? 'max-w-[250px]' : 'max-w-[380px]'} ${compact ? 'mt-0' : 'mt-4'}`}>
       
-      {/* Legend Row - Only show Probability Guide when active */}
+      {/* Legend Row */}
       {!disabled && showProbabilities && (
-        <div className="flex justify-center items-center gap-3 mb-1.5 text-[9px] font-bold text-slate-400 bg-slate-900/50 py-0.5 px-3 rounded-full border border-slate-800/50 mx-auto w-fit animate-in fade-in slide-in-from-bottom-2 h-6">
-             <div className="flex items-center gap-1">
-               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.8)]"></span>
-               <span className="text-amber-100">推薦</span>
+        <div className="flex justify-center items-center gap-4 mb-2 text-[10px] font-medium tracking-widest uppercase text-neutral-300 bg-neutral-800/80 py-1 px-4 rounded-full border border-white/10 mx-auto w-fit animate-in fade-in slide-in-from-bottom-2 shadow-lg">
+             <div className="flex items-center gap-1.5">
+               <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.8)]"></span>
+               <span className="text-amber-100 font-bold">推薦</span>
              </div>
-             <div className="flex items-center gap-1 border-l border-slate-700 pl-2 ml-1">
-               <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
-               <span className="text-emerald-100">普通</span>
+             <div className="flex items-center gap-1.5 border-l border-white/20 pl-3">
+               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+               <span className="text-emerald-100 font-bold">普通</span>
              </div>
         </div>
       )}
+      
+      {/* Smart Mode Legend */}
+      {!disabled && !showProbabilities && (impossibleDigits.length > 0 || Object.keys(confirmedPositions).length > 0) && (
+         <div className="flex justify-center items-center gap-2 mb-2 text-[9px] tracking-widest uppercase text-neutral-400 bg-neutral-800/60 py-1 px-3 rounded-full border border-white/10 mx-auto w-fit">
+            <span>智慧記憶已啟用</span>
+         </div>
+      )}
 
-      <div className={`grid grid-cols-4 ${compact ? 'gap-1.5' : 'gap-4'}`}>
+      <div className={`grid grid-cols-4 ${compact ? 'gap-2' : 'gap-4'}`}>
         
         {/* Row 1: 1, 2, 3, Delete */}
         {renderDigitBtn('1', 'col-start-1 row-start-1')}
@@ -117,9 +126,9 @@ const NumberPad: React.FC<NumberPadProps> = ({
           <button
             onClick={onDelete}
             disabled={disabled}
-            className={`w-full aspect-square rounded-full bg-slate-700/50 hover:bg-red-900/40 active:bg-red-800/60 text-slate-400 hover:text-red-300 border border-slate-600 hover:border-red-800/50 flex items-center justify-center font-bold transition-colors
-            ${compact ? 'text-lg' : 'text-2xl'}
-            ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`w-full aspect-square rounded-full bg-neutral-800 hover:bg-red-950/80 active:bg-red-900 text-neutral-400 hover:text-red-200 border border-white/10 hover:border-red-900/50 flex items-center justify-center font-bold transition-all duration-200 shadow-sm
+            ${compact ? 'text-sm' : 'text-2xl'}
+            ${disabled ? 'opacity-30 cursor-not-allowed' : ''}`}
           >
             ✕
           </button>
@@ -143,16 +152,16 @@ const NumberPad: React.FC<NumberPadProps> = ({
           <button
             onClick={onSubmit}
             disabled={disabled || currentLength !== 4}
-            className={`w-full h-full rounded-full flex flex-col items-center justify-center font-bold shadow transition-all duration-200 border
-            ${compact ? 'text-base gap-0' : 'text-xl gap-1'}
+            className={`w-full h-full rounded-full flex flex-col items-center justify-center font-bold shadow-lg transition-all duration-300 border
+            ${compact ? 'text-sm gap-0.5' : 'text-xl gap-1'}
             ${
               currentLength === 4 && !disabled
-                ? 'bg-gradient-to-b from-cyan-500 to-cyan-700 hover:from-cyan-400 hover:to-cyan-600 text-white border-cyan-400 shadow-[0_0_15px_rgba(8,145,178,0.6)] active:scale-95'
-                : 'bg-slate-800 text-slate-600 border-slate-800 cursor-not-allowed'
+                ? 'bg-gradient-to-b from-amber-300 via-amber-500 to-amber-600 text-neutral-900 border-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.4)] hover:shadow-[0_0_25px_rgba(245,158,11,0.6)] hover:brightness-110 active:scale-95'
+                : 'bg-neutral-800 text-neutral-600 border-white/5 cursor-not-allowed'
             }`}
           >
-            <span className="leading-none text-lg">猜</span>
-            <span className="leading-none text-[9px] opacity-60 mt-0.5">GO</span>
+            <span className="leading-none text-base font-serif">猜</span>
+            <span className="leading-none text-[8px] opacity-70 mt-0.5 tracking-widest">ENTER</span>
           </button>
         </div>
       </div>

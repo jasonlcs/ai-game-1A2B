@@ -6,12 +6,29 @@
     <title>1A2B 猜數字大師</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&family=JetBrains+Mono:wght@400;700&display=swap');
       body {
-        font-family: 'Inter', sans-serif;
+        font-family: 'Lato', sans-serif;
+      }
+      h1, h2, h3, .font-serif {
+        font-family: 'Cinzel', serif;
       }
       .font-mono {
         font-family: 'JetBrains Mono', monospace;
+      }
+      /* Custom Scrollbar for Webkit */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.1);
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(251, 191, 36, 0.3);
+        border-radius: 10px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: rgba(251, 191, 36, 0.6);
       }
     </style>
   <script type="importmap">
@@ -25,7 +42,7 @@
 }
 </script>
 </head>
-  <body class="bg-slate-900 text-slate-100 min-h-screen selection:bg-cyan-500 selection:text-white">
+  <body class="bg-neutral-950 text-neutral-100 min-h-screen selection:bg-amber-500/30 selection:text-amber-200">
     <div id="root"></div>
   </body>
 </html>

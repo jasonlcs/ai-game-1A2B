@@ -18,11 +18,11 @@ const BrainIcon = () => (
 );
 
 const InfoIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
 );
 
-const ChevronDownIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m6 9 6 6 6-6"/></svg>
+const CloseIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
 );
 
 // --- Custom Logo Component ---
@@ -63,85 +63,109 @@ const LuxuryBackground = () => (
 );
 
 
-// --- Sub-component for Game Rules ---
-const GameRules = ({ className }: { className?: string }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
+// --- Sub-component for Game Rules Modal ---
+const GameRulesModal = ({ onClose, mode = 'collapsible', onStart }: { onClose: () => void, mode?: 'collapsible' | 'static', onStart?: () => void }) => {
   return (
-    <div className={`bg-neutral-800/80 border border-white/10 backdrop-blur-xl rounded-xl overflow-hidden transition-all z-10 relative shadow-lg ${className}`}>
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-3 text-neutral-300 hover:bg-white/5 hover:text-amber-100 transition-colors"
-      >
-        <div className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase">
-          <InfoIcon />
-          <span>遊戲規則說明</span>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="w-[85%] max-w-md bg-neutral-900 border border-amber-500/30 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] relative flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
+        
+        {/* Header */}
+        <div className="p-4 flex items-center justify-between border-b border-white/10 bg-neutral-800/50">
+           <div className="flex items-center gap-2 text-amber-100 font-serif font-bold tracking-wider">
+              <InfoIcon />
+              <span>遊戲規則</span>
+           </div>
+           {mode === 'collapsible' && (
+             <button 
+               onClick={onClose}
+               className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white transition-colors"
+             >
+               <CloseIcon />
+             </button>
+           )}
         </div>
-        <ChevronDownIcon className={`transform transition-transform duration-200 text-amber-500/70 ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-      
-      {isOpen && (
-        <div className="p-4 pt-0 text-xs md:text-sm text-neutral-300 border-t border-white/10 bg-black/20">
-          <div className="space-y-4 mt-3">
-            <div>
-              <h3 className="text-amber-100 font-serif font-bold mb-1 tracking-wide">遊戲目標</h3>
-              <p>猜出系統產生的一組 <span className="text-amber-400 font-mono">4</span> 位不重複數字。</p>
+
+        {/* Content */}
+        <div className="p-5 text-sm text-neutral-300 bg-neutral-900/80 overflow-y-auto max-h-[60vh]">
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-amber-500 font-bold mb-1 text-xs tracking-widest uppercase">目標</h3>
+                <p>猜出系統產生的一組 <span className="text-white font-mono font-bold">4</span> 位不重複數字。</p>
+              </div>
+              
+              {/* Visual Diagram */}
+              <div className="my-2 p-3 bg-neutral-950/60 rounded-lg border border-white/5 flex justify-center shadow-inner">
+                <svg viewBox="0 0 300 130" className="w-full h-auto font-mono select-none">
+                  <defs>
+                    <marker id="arrow-green" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                      <path d="M0,0 L6,3 L0,6" fill="#10b981" />
+                    </marker>
+                    <marker id="arrow-yellow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                      <path d="M0,0 L6,3 L0,6" fill="#f59e0b" />
+                    </marker>
+                  </defs>
+
+                  {/* Secret Row */}
+                  <text x="0" y="25" fill="#a3a3a3" fontSize="12" fontWeight="bold">謎底</text>
+                  <g transform="translate(60, 5)">
+                    <rect x="0" y="0" width="30" height="30" rx="4" fill="#262626" stroke="#404040" />
+                    <text x="15" y="20" textAnchor="middle" fill="#e5e5e5" fontSize="14" fontWeight="bold">5</text>
+                    <rect x="40" y="0" width="30" height="30" rx="4" fill="#262626" stroke="#404040" />
+                    <text x="55" y="20" textAnchor="middle" fill="#e5e5e5" fontSize="14" fontWeight="bold">6</text>
+                    <rect x="80" y="0" width="30" height="30" rx="4" fill="#262626" stroke="#404040" />
+                    <text x="95" y="20" textAnchor="middle" fill="#e5e5e5" fontSize="14" fontWeight="bold">7</text>
+                    <rect x="120" y="0" width="30" height="30" rx="4" fill="#262626" stroke="#404040" />
+                    <text x="135" y="20" textAnchor="middle" fill="#e5e5e5" fontSize="14" fontWeight="bold">8</text>
+                  </g>
+
+                  {/* Guess Row */}
+                  <text x="0" y="105" fill="#a3a3a3" fontSize="12" fontWeight="bold">猜測</text>
+                  <g transform="translate(60, 85)">
+                    <rect x="0" y="0" width="30" height="30" rx="4" fill="#262626" stroke="#404040" />
+                    <text x="15" y="20" textAnchor="middle" fill="#e5e5e5" fontSize="14" fontWeight="bold">5</text>
+                    <rect x="40" y="0" width="30" height="30" rx="4" fill="#262626" stroke="#404040" />
+                    <text x="55" y="20" textAnchor="middle" fill="#e5e5e5" fontSize="14" fontWeight="bold">7</text>
+                    <rect x="80" y="0" width="30" height="30" rx="4" fill="#262626" stroke="#404040" />
+                    <text x="95" y="20" textAnchor="middle" fill="#e5e5e5" fontSize="14" fontWeight="bold">2</text>
+                    <rect x="120" y="0" width="30" height="30" rx="4" fill="#262626" stroke="#404040" />
+                    <text x="135" y="20" textAnchor="middle" fill="#e5e5e5" fontSize="14" fontWeight="bold">1</text>
+                  </g>
+
+                  {/* Connections */}
+                  <path d="M75,35 L75,85" stroke="#10b981" strokeWidth="1.5" markerEnd="url(#arrow-green)" strokeDasharray="3"/>
+                  <circle cx="75" cy="60" r="8" fill="#064e3b" stroke="#10b981" strokeWidth="1" />
+                  <text x="75" y="63" textAnchor="middle" fill="#34d399" fontSize="9" fontWeight="bold">A</text>
+
+                  <path d="M155,35 L115,85" stroke="#f59e0b" strokeWidth="1.5" markerEnd="url(#arrow-yellow)" strokeDasharray="3"/>
+                  <circle cx="135" cy="60" r="8" fill="#451a03" stroke="#f59e0b" strokeWidth="1" />
+                  <text x="135" y="63" textAnchor="middle" fill="#fbbf24" fontSize="9" fontWeight="bold">B</text>
+
+                  <text x="210" y="55" fill="#34d399" fontSize="10" fontWeight="bold">位置正確</text>
+                  <text x="210" y="75" fill="#fbbf24" fontSize="10" fontWeight="bold">數字對但位置錯</text>
+                </svg>
+              </div>
             </div>
-            
-            {/* Visual Diagram */}
-            <div className="my-2 p-3 bg-neutral-900/60 rounded-lg border border-white/5 flex justify-center shadow-inner">
-              <svg viewBox="0 0 300 130" className="w-full max-w-[280px] h-auto font-mono select-none">
-                <defs>
-                  <marker id="arrow-green" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                    <path d="M0,0 L6,3 L0,6" fill="#10b981" />
-                  </marker>
-                  <marker id="arrow-yellow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                    <path d="M0,0 L6,3 L0,6" fill="#f59e0b" />
-                  </marker>
-                </defs>
-
-                {/* Secret Row */}
-                <text x="0" y="25" fill="#a3a3a3" fontSize="12" fontWeight="bold">謎底</text>
-                <g transform="translate(60, 5)">
-                  <rect x="0" y="0" width="30" height="30" rx="4" fill="#262626" stroke="#404040" />
-                  <text x="15" y="20" textAnchor="middle" fill="#e5e5e5" fontSize="14" fontWeight="bold">5</text>
-                  <rect x="40" y="0" width="30" height="30" rx="4" fill="#262626" stroke="#404040" />
-                  <text x="55" y="20" textAnchor="middle" fill="#e5e5e5" fontSize="14" fontWeight="bold">6</text>
-                  <rect x="80" y="0" width="30" height="30" rx="4" fill="#262626" stroke="#404040" />
-                  <text x="95" y="20" textAnchor="middle" fill="#e5e5e5" fontSize="14" fontWeight="bold">7</text>
-                  <rect x="120" y="0" width="30" height="30" rx="4" fill="#262626" stroke="#404040" />
-                  <text x="135" y="20" textAnchor="middle" fill="#e5e5e5" fontSize="14" fontWeight="bold">8</text>
-                </g>
-
-                {/* Guess Row */}
-                <text x="0" y="105" fill="#a3a3a3" fontSize="12" fontWeight="bold">猜測</text>
-                <g transform="translate(60, 85)">
-                  <rect x="0" y="0" width="30" height="30" rx="4" fill="#262626" stroke="#404040" />
-                  <text x="15" y="20" textAnchor="middle" fill="#e5e5e5" fontSize="14" fontWeight="bold">5</text>
-                  <rect x="40" y="0" width="30" height="30" rx="4" fill="#262626" stroke="#404040" />
-                  <text x="55" y="20" textAnchor="middle" fill="#e5e5e5" fontSize="14" fontWeight="bold">7</text>
-                  <rect x="80" y="0" width="30" height="30" rx="4" fill="#262626" stroke="#404040" />
-                  <text x="95" y="20" textAnchor="middle" fill="#e5e5e5" fontSize="14" fontWeight="bold">2</text>
-                  <rect x="120" y="0" width="30" height="30" rx="4" fill="#262626" stroke="#404040" />
-                  <text x="135" y="20" textAnchor="middle" fill="#e5e5e5" fontSize="14" fontWeight="bold">1</text>
-                </g>
-
-                {/* Connections */}
-                <path d="M75,35 L75,85" stroke="#10b981" strokeWidth="1.5" markerEnd="url(#arrow-green)" strokeDasharray="3"/>
-                <circle cx="75" cy="60" r="8" fill="#064e3b" stroke="#10b981" strokeWidth="1" />
-                <text x="75" y="63" textAnchor="middle" fill="#34d399" fontSize="9" fontWeight="bold">A</text>
-
-                <path d="M155,35 L115,85" stroke="#f59e0b" strokeWidth="1.5" markerEnd="url(#arrow-yellow)" strokeDasharray="3"/>
-                <circle cx="135" cy="60" r="8" fill="#451a03" stroke="#f59e0b" strokeWidth="1" />
-                <text x="135" y="63" textAnchor="middle" fill="#fbbf24" fontSize="9" fontWeight="bold">B</text>
-
-                <text x="210" y="55" fill="#34d399" fontSize="10" fontWeight="bold">位置正確</text>
-                <text x="210" y="75" fill="#fbbf24" fontSize="10" fontWeight="bold">數字對但位置錯</text>
-              </svg>
-            </div>
-          </div>
         </div>
-      )}
+
+        {/* Footer Action */}
+        <div className="p-4 border-t border-white/10 bg-neutral-800/50">
+             {mode === 'static' && onStart ? (
+                <button 
+                  onClick={onStart}
+                  className="w-full py-3 rounded-lg bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-neutral-900 font-bold tracking-widest shadow-lg transition-all active:scale-95 text-lg uppercase"
+                >
+                  開始挑戰
+                </button>
+             ) : (
+                <button 
+                  onClick={onClose}
+                  className="w-full py-3 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-bold tracking-widest shadow-lg transition-all active:scale-95 border border-white/10"
+                >
+                  我瞭解了
+                </button>
+             )}
+        </div>
+      </div>
     </div>
   );
 };
@@ -183,7 +207,7 @@ const GameHistory = ({ guesses, totalGuesses }: { guesses: GuessResult[], totalG
   if (guesses.length === 0) return null;
 
   return (
-    <div className="grid grid-cols-2 gap-2 mt-2">
+    <div className="grid grid-cols-3 gap-2 mt-2">
       {guesses.map((result, idx) => {
         // Since guesses are reversed, the first one (index 0) is the latest
         const isLatest = idx === 0;
@@ -193,28 +217,55 @@ const GameHistory = ({ guesses, totalGuesses }: { guesses: GuessResult[], totalG
           <div 
             key={`${result.guess}-${idx}`}
             className={`
-              flex items-center justify-between px-3 py-2 rounded-lg border transition-all
+              col-span-1 flex flex-col justify-between items-center rounded-lg border transition-all duration-500 backdrop-blur-sm relative overflow-hidden group
               ${isLatest 
-                ? 'bg-neutral-800/90 border-amber-500/40 shadow-[0_4px_20px_rgba(0,0,0,0.3)] backdrop-blur-md col-span-2 relative overflow-hidden group' 
-                : 'bg-neutral-800/60 border-white/10 text-neutral-400 col-span-1 hover:bg-neutral-800/80'
+                ? 'bg-neutral-800 border-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.25)] z-20 scale-[1.02]' 
+                : 'bg-neutral-900/40 border-white/5 text-neutral-500 opacity-70 scale-100'
               }
             `}
           >
-            {isLatest && <div className="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>}
-            
-            <div className="flex items-center gap-2">
-              <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${isLatest ? 'bg-amber-950/80 text-amber-200 border-amber-900' : 'bg-neutral-900/50 text-neutral-500 border-white/5'}`}>
-                {realIndex.toString().padStart(2, '0')}
-              </span>
-              <span className={`font-mono font-bold tracking-[0.2em] ${isLatest ? 'text-xl text-white' : 'text-sm text-neutral-200'}`}>
-                {result.guess}
-              </span>
-            </div>
-            
-            <div className={`font-mono font-bold flex gap-1 ${isLatest ? 'text-lg' : 'text-sm'}`}>
-              <span className={result.a === 4 ? "text-emerald-400" : isLatest ? "text-emerald-400" : "text-neutral-400"}>{result.a}A</span>
-              <span className={result.b > 0 ? "text-amber-400" : isLatest ? "text-amber-400" : "text-neutral-500"}>{result.b}B</span>
-            </div>
+             {/* NEW Badge for Latest */}
+             {isLatest && (
+               <div className="absolute top-0 right-0">
+                  <div className="bg-amber-500 text-neutral-900 text-[8px] font-bold px-1.5 py-0.5 rounded-bl-md">
+                    NEW
+                  </div>
+               </div>
+             )}
+
+             {/* Header: Index | Result */}
+             <div className={`
+                flex w-full justify-between items-center px-2 py-1.5 border-b
+                ${isLatest ? 'bg-amber-600 border-amber-500' : 'bg-transparent border-white/5'}
+             `}>
+                <span className={`text-[9px] font-mono ${isLatest ? 'text-neutral-900 font-extrabold' : 'text-neutral-600'}`}>
+                  #{realIndex.toString().padStart(2, '0')}
+                </span>
+                <div className={`font-mono font-bold text-[10px] flex gap-0.5 ${isLatest ? 'text-neutral-900' : ''}`}>
+                  <span className={isLatest ? "text-white drop-shadow-sm" : (result.a === 4 ? "text-emerald-500" : "text-neutral-500")}>{result.a}A</span>
+                  <span className={isLatest ? "text-white drop-shadow-sm" : (result.b > 0 ? "text-amber-500" : "text-neutral-600")}>{result.b}B</span>
+                </div>
+             </div>
+             
+             {/* Guess Number Digits */}
+             <div className="flex items-center justify-center gap-1 py-2">
+                 {result.guess.split('').map((digit, i) => {
+                    return (
+                        <div 
+                            key={i} 
+                            className={`
+                                flex items-center justify-center rounded font-mono font-bold leading-none border shadow-sm
+                                ${isLatest 
+                                    ? 'w-5 h-6 text-sm bg-emerald-600 text-white border-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]' 
+                                    : 'w-4 h-5 text-[10px] bg-emerald-900/40 text-emerald-100/60 border-emerald-800/50'
+                                }
+                            `}
+                        >
+                            {digit}
+                        </div>
+                    );
+                 })}
+             </div>
           </div>
         );
       })}
@@ -286,6 +337,8 @@ export default function App() {
   });
   const [input, setInput] = useState('');
   const [difficulty, setDifficulty] = useState<Difficulty>('smart');
+  const [showRules, setShowRules] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false); // New state for Intro Screen
 
   // Calculation Hooks
   const impossibleDigits = useMemo(() => getImpossibleDigits(gameState.possibleAnswers), [gameState.possibleAnswers]);
@@ -314,6 +367,10 @@ export default function App() {
       status: 'playing',
     });
     setInput('');
+  };
+
+  const handleStartGame = () => {
+    setHasStarted(true);
   };
 
   const handleGuess = () => {
@@ -351,166 +408,202 @@ export default function App() {
     <div className="flex flex-col h-[100dvh] w-full max-w-md mx-auto relative text-neutral-100 overflow-hidden font-sans bg-black">
       <LuxuryBackground />
       
-      {/* Header */}
-      <header className="flex-none p-4 pb-2 flex items-center justify-between z-10">
-        <div className="flex items-center gap-3">
-           <GameLogo />
-           <div className="flex flex-col justify-center">
-             <h1 className="text-xl font-serif font-bold tracking-wider text-amber-50 leading-none drop-shadow-md">1A2B</h1>
-             <p className="text-[9px] text-amber-400/90 font-mono tracking-[0.3em] uppercase mt-1">Mastermind</p>
-           </div>
-        </div>
-        <div className="flex items-center gap-3">
-            {/* Segmented Control for Difficulty */}
-            <div className="flex bg-neutral-800/80 backdrop-blur-md rounded-lg p-1 border border-white/10 shadow-lg">
-               <button 
-                 onClick={() => setDifficulty('easy')}
-                 className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all tracking-wider ${difficulty === 'easy' ? 'bg-amber-600/90 text-white shadow-md' : 'text-neutral-400 hover:text-neutral-200'}`}
-               >
-                 簡單
-               </button>
-               <button 
-                 onClick={() => setDifficulty('smart')}
-                 className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all tracking-wider flex items-center gap-1.5 ${difficulty === 'smart' ? 'bg-indigo-600/90 text-white shadow-md' : 'text-neutral-400 hover:text-neutral-200'}`}
-               >
-                 <BrainIcon />
-                 智慧
-               </button>
-               <button 
-                 onClick={() => setDifficulty('hard')}
-                 className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all tracking-wider ${difficulty === 'hard' ? 'bg-neutral-600/90 text-white shadow-md' : 'text-neutral-400 hover:text-neutral-200'}`}
-               >
-                 困難
-               </button>
-            </div>
-            
-            <button 
-              onClick={handleRestart}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-800/80 hover:bg-neutral-700 text-neutral-300 hover:text-amber-200 border border-white/10 transition-colors shadow-sm"
-              title="重新開始"
-            >
-              <RefreshIcon />
-            </button>
-        </div>
-      </header>
-
-      {/* Main Content Area - Scrollable */}
-      <main className="flex-1 overflow-y-auto px-5 pb-2 z-10 custom-scrollbar flex flex-col" ref={scrollRef}>
-        
-        {gameState.status === 'won' ? (
-           // --- WIN STATE ---
-           <div className="flex-1 flex flex-col items-center animate-in zoom-in-95 duration-700 ease-out">
-              <div className="mt-6 mb-4 text-center relative">
-                  <div className="absolute inset-0 bg-amber-500/20 blur-3xl rounded-full"></div>
-                  <h2 className="relative text-4xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-b from-amber-100 to-amber-500 drop-shadow-[0_2px_10px_rgba(245,158,11,0.3)] tracking-widest">
-                      VICTORY
-                  </h2>
-                  <div className="h-px w-24 bg-gradient-to-r from-transparent via-amber-500 to-transparent mx-auto my-2"></div>
-                  <p className="text-neutral-400 text-xs font-mono tracking-widest uppercase relative z-10">
-                      Attempts: <span className="text-amber-100 font-bold text-lg">{gameState.guesses.length}</span>
-                  </p>
-              </div>
-              
-              {/* Review Timeline */}
-              <div className="w-full flex-1 bg-neutral-900/60 rounded-2xl border border-white/10 p-1 mb-4 flex flex-col overflow-hidden relative backdrop-blur-xl shadow-2xl">
-                  <div className="px-4 py-3 text-xs text-neutral-400 font-bold uppercase tracking-[0.2em] flex items-center gap-2 border-b border-white/5">
-                    <HistoryIcon />
-                    Analysis Log
-                  </div>
-                  <div className="flex-1 overflow-hidden p-2">
-                     <GameReviewList guesses={gameState.guesses} />
-                  </div>
-              </div>
-           </div>
-        ) : (
-          // --- PLAYING STATE ---
-          <div className="flex flex-col gap-3 min-h-min pb-24">
-            {/* Rules */}
-            {gameState.guesses.length === 0 && (
-                <div className="animate-in fade-in slide-in-from-top-4 duration-500">
-                    <GameRules />
+      {/* Intro Screen / Rules Modal */}
+      {!hasStarted ? (
+         // INTRO SCREEN
+         <div className="absolute inset-0 z-50 flex items-center justify-center p-4">
+             <div className="absolute inset-0 bg-neutral-950/90 backdrop-blur-xl"></div>
+             
+             {/* Intro Content */}
+             <div className="relative z-10 w-full flex flex-col items-center gap-6 animate-in zoom-in-95 duration-700">
+                <div className="scale-150 mb-4">
+                   <GameLogo />
                 </div>
-            )}
+                <div className="text-center">
+                   <h1 className="text-4xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-br from-amber-100 to-amber-600 mb-2 drop-shadow-lg">1A2B</h1>
+                   <p className="text-neutral-400 tracking-[0.5em] text-xs uppercase font-mono">Logic Mastermind</p>
+                </div>
+                
+                {/* Embed Static Rules Here */}
+                <GameRulesModal onClose={() => {}} mode="static" onStart={handleStartGame} />
+             </div>
+         </div>
+      ) : (
+        <>
+          {/* Rules Overlay (Popup) */}
+          {showRules && <GameRulesModal onClose={() => setShowRules(false)} />}
+
+          {/* Header */}
+          <header className="flex-none p-4 pb-2 flex items-center justify-between z-10">
+            <div className="flex items-center gap-3">
+               <GameLogo />
+               <div className="flex flex-col justify-center">
+                 <h1 className="text-xl font-serif font-bold tracking-wider text-amber-50 leading-none drop-shadow-md">1A2B</h1>
+                 <p className="text-[9px] text-amber-400/90 font-mono tracking-[0.3em] uppercase mt-1">Mastermind</p>
+               </div>
+            </div>
+            <div className="flex items-center gap-2">
+                {/* Rules Button */}
+                <button 
+                  onClick={() => setShowRules(true)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-800/80 hover:bg-neutral-700 text-amber-400 border border-white/10 transition-colors shadow-sm"
+                  title="遊戲規則"
+                >
+                  <InfoIcon />
+                </button>
+
+                {/* Segmented Control for Difficulty */}
+                <div className="flex bg-neutral-800/80 backdrop-blur-md rounded-lg p-1 border border-white/10 shadow-lg">
+                   <button 
+                     onClick={() => setDifficulty('easy')}
+                     className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all tracking-wider ${difficulty === 'easy' ? 'bg-amber-600/90 text-white shadow-md' : 'text-neutral-400 hover:text-neutral-200'}`}
+                   >
+                     簡單
+                   </button>
+                   <button 
+                     onClick={() => setDifficulty('smart')}
+                     className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all tracking-wider flex items-center gap-1.5 ${difficulty === 'smart' ? 'bg-indigo-600/90 text-white shadow-md' : 'text-neutral-400 hover:text-neutral-200'}`}
+                   >
+                     <BrainIcon />
+                     智慧
+                   </button>
+                   <button 
+                     onClick={() => setDifficulty('hard')}
+                     className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all tracking-wider ${difficulty === 'hard' ? 'bg-neutral-600/90 text-white shadow-md' : 'text-neutral-400 hover:text-neutral-200'}`}
+                   >
+                     困難
+                   </button>
+                </div>
+                
+                <button 
+                  onClick={handleRestart}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-800/80 hover:bg-neutral-700 text-neutral-300 hover:text-amber-200 border border-white/10 transition-colors shadow-sm"
+                  title="重新開始"
+                >
+                  <RefreshIcon />
+                </button>
+            </div>
+          </header>
+
+          {/* Main Content Area - Scrollable */}
+          <main className="flex-1 overflow-y-auto px-5 pb-2 z-10 custom-scrollbar flex flex-col" ref={scrollRef}>
             
-            {/* Analysis Panel (Stats) - COMPACT ROW LAYOUT */}
-            <div className="bg-neutral-800/80 rounded-xl p-3 border border-white/10 backdrop-blur-md shadow-lg flex items-center justify-between relative overflow-hidden h-14">
-                 
-                 {/* Progress Bar Background (Bottom Line) */}
-                 <div className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-amber-600 via-amber-400 to-transparent transition-all duration-700" style={{ width: `${(100 - (remainingCount / 5040) * 100)}%` }}></div>
-                 
-                 {/* Stats */}
-                 <div className="flex items-center gap-4">
-                     <div className="flex flex-col">
-                        <span className="text-[8px] text-neutral-500 font-mono uppercase tracking-widest">剩餘</span>
-                        <span className="text-lg font-bold text-amber-100 font-mono leading-none">{remainingCount}</span>
-                     </div>
-                     <div className="w-px h-5 bg-white/5"></div>
-                     <div className="flex flex-col">
-                        <span className="text-[8px] text-neutral-500 font-mono uppercase tracking-widest">排除</span>
-                        <span className="text-xs font-bold text-neutral-400 font-mono leading-none">{(100 - (remainingCount / 5040) * 100).toFixed(1)}%</span>
-                     </div>
-                 </div>
-                 
-                 {/* Positional Analysis */}
-                 {remainingCount < 50 && remainingCount > 0 && (
-                     <div className="animate-in fade-in slide-in-from-right-4">
-                        <PositionalAnalysis possibleAnswers={gameState.possibleAnswers} />
-                     </div>
-                 )}
-            </div>
-
-            {/* History List */}
-            <GameHistory guesses={reversedGuesses} totalGuesses={gameState.guesses.length} />
-          </div>
-        )}
-      </main>
-
-      {/* Footer / Input Area */}
-      <footer className="flex-none p-4 pt-2 bg-neutral-950/90 backdrop-blur-xl border-t border-white/10 z-20 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
-        {gameState.status === 'won' ? (
-           <button 
-             onClick={handleRestart}
-             className="w-full py-4 bg-gradient-to-r from-neutral-800 to-neutral-700 hover:from-neutral-700 hover:to-neutral-600 text-amber-100 font-serif font-bold rounded-xl border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)] text-lg tracking-[0.3em] transition-all active:scale-95 flex items-center justify-center gap-3 uppercase group"
-           >
-             <RefreshIcon />
-             Play Again
-           </button>
-        ) : (
-            <div className="flex flex-col gap-2 max-w-md mx-auto w-full">
-              {/* Input Display */}
-              <div className="flex justify-center gap-3 mb-1">
-                {[0, 1, 2, 3].map((i) => (
-                  <div 
-                    key={i}
-                    className={`
-                      w-10 h-12 rounded-lg flex items-center justify-center text-2xl font-mono font-bold
-                      bg-neutral-800/80 border transition-all duration-300 backdrop-blur-sm
-                      ${input[i] 
-                        ? 'border-amber-500/50 text-amber-100 shadow-[0_0_15px_rgba(245,158,11,0.2)] scale-110' 
-                        : 'border-white/10 text-white'
-                      }
-                    `}
-                  >
-                    {input[i] || ''}
+            {gameState.status === 'won' ? (
+               // --- WIN STATE ---
+               <div className="flex-1 flex flex-col items-center animate-in zoom-in-95 duration-700 ease-out">
+                  <div className="mt-6 mb-4 text-center relative">
+                      <div className="absolute inset-0 bg-amber-500/20 blur-3xl rounded-full"></div>
+                      <h2 className="relative text-4xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-b from-amber-100 to-amber-500 drop-shadow-[0_2px_10px_rgba(245,158,11,0.3)] tracking-widest">
+                          VICTORY
+                      </h2>
+                      <div className="h-px w-24 bg-gradient-to-r from-transparent via-amber-500 to-transparent mx-auto my-2"></div>
+                      <p className="text-neutral-400 text-xs font-mono tracking-widest uppercase relative z-10">
+                          Attempts: <span className="text-amber-100 font-bold text-lg">{gameState.guesses.length}</span>
+                      </p>
                   </div>
-                ))}
-              </div>
+                  
+                  {/* Review Timeline */}
+                  <div className="w-full flex-1 bg-neutral-900/60 rounded-2xl border border-white/10 p-1 mb-4 flex flex-col overflow-hidden relative backdrop-blur-xl shadow-2xl">
+                      <div className="px-4 py-3 text-xs text-neutral-400 font-bold uppercase tracking-[0.2em] flex items-center gap-2 border-b border-white/5">
+                        <HistoryIcon />
+                        Analysis Log
+                      </div>
+                      <div className="flex-1 overflow-hidden p-2">
+                         <GameReviewList guesses={gameState.guesses} />
+                      </div>
+                  </div>
+               </div>
+            ) : (
+              // --- PLAYING STATE ---
+              <div className="flex flex-col gap-3 min-h-min pb-24">
+                
+                {/* Analysis Panel (Stats) - COMPACT ROW LAYOUT */}
+                <div className="bg-neutral-800/80 rounded-xl p-3 border border-white/10 backdrop-blur-md shadow-lg flex items-center justify-between relative overflow-hidden h-14">
+                     
+                     {/* Progress Bar Background (Bottom Line) */}
+                     <div className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-amber-600 via-amber-400 to-transparent transition-all duration-700" style={{ width: `${(100 - (remainingCount / 5040) * 100)}%` }}></div>
+                     
+                     {/* Stats */}
+                     <div className="flex items-center gap-4">
+                         <div className="flex flex-col">
+                            <span className="text-[8px] text-neutral-500 font-mono uppercase tracking-widest">剩餘</span>
+                            <span className="text-lg font-bold text-amber-100 font-mono leading-none">{remainingCount}</span>
+                         </div>
+                         <div className="w-px h-5 bg-white/5"></div>
+                         <div className="flex flex-col">
+                            <span className="text-[8px] text-neutral-500 font-mono uppercase tracking-widest">排除</span>
+                            <span className="text-xs font-bold text-neutral-400 font-mono leading-none">{(100 - (remainingCount / 5040) * 100).toFixed(1)}%</span>
+                         </div>
+                     </div>
+                     
+                     {/* Positional Analysis */}
+                     {remainingCount < 50 && remainingCount > 0 && (
+                         <div className="animate-in fade-in slide-in-from-right-4">
+                            <PositionalAnalysis possibleAnswers={gameState.possibleAnswers} />
+                         </div>
+                     )}
+                </div>
 
-              {/* Number Pad */}
-              <NumberPad 
-                onDigitClick={handleDigitClick}
-                onDelete={handleDelete}
-                onSubmit={handleGuess}
-                disabled={gameState.status !== 'playing'}
-                currentLength={input.length}
-                impossibleDigits={showMemoryHints ? impossibleDigits : []}
-                confirmedPositions={showMemoryHints ? confirmedPositions : {}}
-                digitProbabilities={showPredictionHints ? digitProbabilities : {}}
-                compact={true}
-              />
-            </div>
-        )}
-      </footer>
+                {/* Game History List */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar -mr-2 pr-2">
+                   <GameHistory guesses={reversedGuesses} totalGuesses={gameState.guesses.length} />
+                </div>
+
+              </div>
+            )}
+          </main>
+
+          {/* Footer Input Area (Only when playing) */}
+          {gameState.status === 'playing' && (
+            <footer className="flex-none pt-2 pb-6 px-4 z-20 bg-gradient-to-t from-neutral-950 via-neutral-950/95 to-transparent flex flex-col items-center">
+               {/* Input Display */}
+               <div className="flex gap-3 mb-2">
+                  {[0, 1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className={`
+                        w-10 h-12 rounded-lg border flex items-center justify-center text-2xl font-mono font-bold shadow-inner backdrop-blur-sm transition-all duration-200
+                        ${input[i] 
+                          ? 'bg-neutral-800/80 border-amber-500/50 text-amber-100 shadow-[0_0_10px_rgba(245,158,11,0.1)]' 
+                          : 'bg-neutral-900/40 border-white/5'
+                        }
+                        ${i === input.length ? 'ring-1 ring-amber-500/30 bg-white/5' : ''}
+                      `}
+                    >
+                      {input[i] || ''}
+                    </div>
+                  ))}
+               </div>
+
+               {/* Keypad */}
+               <NumberPad
+                 onDigitClick={handleDigitClick}
+                 onDelete={handleDelete}
+                 onSubmit={handleGuess}
+                 disabled={gameState.status !== 'playing'}
+                 currentLength={input.length}
+                 impossibleDigits={showMemoryHints ? impossibleDigits : []}
+                 confirmedPositions={showMemoryHints ? confirmedPositions : {}}
+                 digitProbabilities={showPredictionHints ? digitProbabilities : {}}
+                 compact={true}
+               />
+            </footer>
+          )}
+          
+          {/* Win State Footer Action */}
+          {gameState.status === 'won' && (
+             <footer className="flex-none p-6 z-20 bg-neutral-900 border-t border-white/5 flex items-center justify-center">
+                 <button 
+                   onClick={handleRestart}
+                   className="w-full max-w-[280px] py-4 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-neutral-900 font-bold text-lg tracking-widest shadow-[0_0_20px_rgba(245,158,11,0.4)] transition-all active:scale-95 uppercase flex items-center justify-center gap-2"
+                 >
+                   <RefreshIcon />
+                   Play Again
+                 </button>
+             </footer>
+          )}
+        </>
+      )}
     </div>
   );
 }

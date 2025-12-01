@@ -107,13 +107,6 @@ const NumberPad: React.FC<NumberPadProps> = ({
              </div>
         </div>
       )}
-      
-      {/* Smart Mode Legend */}
-      {!disabled && !showProbabilities && (impossibleDigits.length > 0 || Object.keys(confirmedPositions).length > 0) && (
-         <div className="flex justify-center items-center gap-2 mb-2 text-[9px] tracking-widest uppercase text-neutral-400 bg-neutral-800/60 py-1 px-3 rounded-full border border-white/10 mx-auto w-fit">
-            <span>智慧記憶已啟用</span>
-         </div>
-      )}
 
       <div className={`grid grid-cols-4 ${compact ? 'gap-2' : 'gap-4'}`}>
         

@@ -151,15 +151,25 @@ const PositionalAnalysis = ({ possibleAnswers }: { possibleAnswers: string[] }) 
   const positionalData = useMemo(() => getPositionalPossibilities(possibleAnswers), [possibleAnswers]);
 
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-1.5 h-full items-center">
       {positionalData.map((digits, idx) => {
         const isMasked = digits.length > 3;
         
         return (
-          <div key={idx} className="bg-neutral-900/40 border border-white/5 rounded w-7 h-8 flex flex-col items-center justify-center text-center">
-            <div className="text-[6px] text-neutral-500 font-mono tracking-wider">#{idx + 1}</div>
-            <div className={`font-mono font-bold leading-none mt-0.5 ${isMasked ? 'text-neutral-600 text-[10px]' : 'text-amber-100 text-[9px] tracking-tighter'}`}>
-              {isMasked ? '*' : digits.join('')}
+          <div key={idx} className="bg-neutral-900/40 border border-white/5 rounded-md min-w-[34px] h-9 flex items-center justify-center px-1 shadow-inner">
+            <div className="flex items-center justify-center gap-0.5">
+              {isMasked ? (
+                 <span className="text-neutral-500 text-sm font-mono">*</span>
+              ) : (
+                digits.map((digit) => (
+                    <div 
+                      key={digit} 
+                      className="w-4 h-5 flex items-center justify-center rounded-[3px] bg-amber-950/60 border border-amber-500/40 text-xs font-bold text-amber-50 shadow-[0_0_5px_rgba(245,158,11,0.2)]"
+                    >
+                      {digit}
+                    </div>
+                ))
+              )}
             </div>
           </div>
         );

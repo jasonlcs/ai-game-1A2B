@@ -3,7 +3,6 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { generateAllCombinations, generateSecret, calculateAB, filterPossibilities, getImpossibleDigits, getConfirmedPositions, getPositionalPossibilities, getDigitProbabilities, generateGameReview, ReviewStep } from './utils/gameEngine';
 import { GuessResult, GameState } from './types';
 import NumberPad from './components/NumberPad';
-import GameStats from './components/GameStats';
 
 // Icons
 const RefreshIcon = () => (
@@ -152,19 +151,19 @@ const PositionalAnalysis = ({ possibleAnswers }: { possibleAnswers: string[] }) 
   const positionalData = useMemo(() => getPositionalPossibilities(possibleAnswers), [possibleAnswers]);
 
   return (
-    <div className="space-y-1.5">
-       <div className="grid grid-cols-4 gap-2">
-         {positionalData.map((digits, idx) => (
-           <div key={idx} className="bg-neutral-800/80 border border-white/10 rounded px-1 py-1.5 text-center flex flex-col h-full shadow-inner">
-             <div className="text-[9px] text-neutral-400 mb-1 font-bold border-b border-white/10 pb-1">第 {idx + 1} 位</div>
-             <div className="flex-1 flex items-center justify-center">
-               <div className="text-[10px] leading-tight text-amber-100 break-all font-mono tracking-widest">
-                 {digits.join(' ')}
-               </div>
-             </div>
-           </div>
-         ))}
-       </div>
+    <div className="flex gap-1">
+      {positionalData.map((digits, idx) => {
+        const isMasked = digits.length > 3;
+        
+        return (
+          <div key={idx} className="bg-neutral-900/40 border border-white/5 rounded w-7 h-8 flex flex-col items-center justify-center text-center">
+            <div className="text-[6px] text-neutral-500 font-mono tracking-wider">#{idx + 1}</div>
+            <div className={`font-mono font-bold leading-none mt-0.5 ${isMasked ? 'text-neutral-600 text-[10px]' : 'text-amber-100 text-[9px] tracking-tighter'}`}>
+              {isMasked ? '*' : digits.join('')}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -423,13 +422,28 @@ export default function App() {
                 </div>
             )}
             
-            {/* Analysis Panel (Stats) */}
-            <div className="bg-neutral-800/80 rounded-xl p-4 border border-white/10 backdrop-blur-md shadow-lg">
-                 <GameStats remainingCount={remainingCount} totalCombinations={5040} />
+            {/* Analysis Panel (Stats) - COMPACT ROW LAYOUT */}
+            <div className="bg-neutral-800/80 rounded-xl p-3 border border-white/10 backdrop-blur-md shadow-lg flex items-center justify-between relative overflow-hidden h-14">
+                 
+                 {/* Progress Bar Background (Bottom Line) */}
+                 <div className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-amber-600 via-amber-400 to-transparent transition-all duration-700" style={{ width: `${(100 - (remainingCount / 5040) * 100)}%` }}></div>
+                 
+                 {/* Stats */}
+                 <div className="flex items-center gap-4">
+                     <div className="flex flex-col">
+                        <span className="text-[8px] text-neutral-500 font-mono uppercase tracking-widest">剩餘</span>
+                        <span className="text-lg font-bold text-amber-100 font-mono leading-none">{remainingCount}</span>
+                     </div>
+                     <div className="w-px h-5 bg-white/5"></div>
+                     <div className="flex flex-col">
+                        <span className="text-[8px] text-neutral-500 font-mono uppercase tracking-widest">排除</span>
+                        <span className="text-xs font-bold text-neutral-400 font-mono leading-none">{(100 - (remainingCount / 5040) * 100).toFixed(1)}%</span>
+                     </div>
+                 </div>
                  
                  {/* Positional Analysis */}
                  {remainingCount < 50 && remainingCount > 0 && (
-                     <div className="mt-3 pt-3 border-t border-white/10 animate-in fade-in">
+                     <div className="animate-in fade-in slide-in-from-right-4">
                         <PositionalAnalysis possibleAnswers={gameState.possibleAnswers} />
                      </div>
                  )}

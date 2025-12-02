@@ -54,18 +54,13 @@ const GameLogo = () => (
 // --- Luxury Background Component (Brightened) ---
 const LuxuryBackground = () => (
   <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-neutral-900">
-    {/* Radial Gradient Base - Lighter Center */}
     <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,_rgba(30,41,59,1)_0%,_rgba(10,10,10,1)_100%)]"></div>
-    
-    {/* Golden Glow Top - Stronger */}
     <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[90%] h-[50%] bg-amber-600/10 blur-[120px] rounded-full"></div>
-
-    {/* Abstract Waves/Mesh - Higher Opacity */}
     <svg width="100%" height="100%" className="absolute inset-0 opacity-30">
       <defs>
         <linearGradient id="goldLine" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stopColor="transparent" />
-          <stop offset="50%" stopColor="#d97706" /> {/* Amber 600 */}
+          <stop offset="50%" stopColor="#d97706" /> 
           <stop offset="100%" stopColor="transparent" />
         </linearGradient>
       </defs>
@@ -73,8 +68,6 @@ const LuxuryBackground = () => (
       <path d="M0,300 Q 250,400 500,300 T 1000,300" fill="none" stroke="url(#goldLine)" strokeWidth="0.8" opacity="0.6" />
       <path d="M0,500 Q 250,600 500,500 T 1000,500" fill="none" stroke="url(#goldLine)" strokeWidth="0.8" opacity="0.4" />
     </svg>
-    
-    {/* Noise Texture */}
     <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}></div>
   </div>
 );
@@ -85,8 +78,6 @@ const GameRulesModal = ({ onClose, mode = 'collapsible', onStart, initialName = 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="w-[85%] max-w-md bg-neutral-900 border border-amber-500/30 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] relative flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
-        
-        {/* Header */}
         <div className="p-4 flex items-center justify-between border-b border-white/10 bg-neutral-800/50">
            <div className="flex items-center gap-2 text-amber-100 font-serif font-bold tracking-wider">
               <InfoIcon />
@@ -101,16 +92,12 @@ const GameRulesModal = ({ onClose, mode = 'collapsible', onStart, initialName = 
              </button>
            )}
         </div>
-
-        {/* Content */}
         <div className="p-5 text-sm text-neutral-300 bg-neutral-900/80 overflow-y-auto max-h-[60vh]">
             <div className="space-y-4">
               <div>
                 <h3 className="text-amber-500 font-bold mb-1 text-xs tracking-widest uppercase">目標</h3>
                 <p>猜出系統產生的一組 <span className="text-white font-mono font-bold">4</span> 位不重複數字。</p>
               </div>
-              
-              {/* Visual Diagram */}
               <div className="my-2 p-3 bg-neutral-950/60 rounded-lg border border-white/5 flex justify-center shadow-inner">
                 <svg viewBox="0 0 300 130" className="w-full h-auto font-mono select-none">
                   <defs>
@@ -121,8 +108,6 @@ const GameRulesModal = ({ onClose, mode = 'collapsible', onStart, initialName = 
                       <path d="M0,0 L6,3 L0,6" fill="#f59e0b" />
                     </marker>
                   </defs>
-
-                  {/* Secret Row */}
                   <text x="0" y="25" fill="#a3a3a3" fontSize="12" fontWeight="bold">謎底</text>
                   <g transform="translate(60, 5)">
                     <rect x="0" y="0" width="30" height="30" rx="4" fill="#262626" stroke="#404040" />
@@ -134,8 +119,6 @@ const GameRulesModal = ({ onClose, mode = 'collapsible', onStart, initialName = 
                     <rect x="120" y="0" width="30" height="30" rx="4" fill="#262626" stroke="#404040" />
                     <text x="135" y="20" textAnchor="middle" fill="#e5e5e5" fontSize="14" fontWeight="bold">8</text>
                   </g>
-
-                  {/* Guess Row */}
                   <text x="0" y="105" fill="#a3a3a3" fontSize="12" fontWeight="bold">猜測</text>
                   <g transform="translate(60, 85)">
                     <rect x="0" y="0" width="30" height="30" rx="4" fill="#262626" stroke="#404040" />
@@ -147,24 +130,52 @@ const GameRulesModal = ({ onClose, mode = 'collapsible', onStart, initialName = 
                     <rect x="120" y="0" width="30" height="30" rx="4" fill="#262626" stroke="#404040" />
                     <text x="135" y="20" textAnchor="middle" fill="#e5e5e5" fontSize="14" fontWeight="bold">1</text>
                   </g>
-
-                  {/* Connections */}
                   <path d="M75,35 L75,85" stroke="#10b981" strokeWidth="1.5" markerEnd="url(#arrow-green)" strokeDasharray="3"/>
                   <circle cx="75" cy="60" r="8" fill="#064e3b" stroke="#10b981" strokeWidth="1" />
                   <text x="75" y="63" textAnchor="middle" fill="#34d399" fontSize="9" fontWeight="bold">A</text>
-
                   <path d="M155,35 L115,85" stroke="#f59e0b" strokeWidth="1.5" markerEnd="url(#arrow-yellow)" strokeDasharray="3"/>
                   <circle cx="135" cy="60" r="8" fill="#451a03" stroke="#f59e0b" strokeWidth="1" />
                   <text x="135" y="63" textAnchor="middle" fill="#fbbf24" fontSize="9" fontWeight="bold">B</text>
-
                   <text x="210" y="55" fill="#34d399" fontSize="10" fontWeight="bold">位置正確</text>
                   <text x="210" y="75" fill="#fbbf24" fontSize="10" fontWeight="bold">數字對但位置錯</text>
                 </svg>
               </div>
+              <div className="pt-2 border-t border-white/5">
+                <h3 className="text-amber-500 font-bold mb-2 text-xs tracking-widest uppercase">計分規則 (SCORING)</h3>
+                <div className="bg-neutral-950/60 p-3 rounded-lg border border-white/5 space-y-2 font-mono text-xs">
+                    <div className="flex justify-between">
+                        <span className="text-neutral-400">基礎分數</span>
+                        <span className="text-amber-100 font-bold">10,000</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="text-neutral-400">時間懲罰</span>
+                        <span className="text-red-400">-10 / 秒</span>
+                    </div>
+                    <div className="h-px bg-white/10 my-1"></div>
+                    <div className="grid grid-cols-3 gap-2 text-[10px] text-center">
+                        <div className="bg-amber-900/20 rounded p-1 border border-amber-500/10">
+                            <div className="text-amber-500 font-bold">簡單 EASY</div>
+                            <div className="text-red-300">-500 / 次</div>
+                            <div className="text-white">x 1.0</div>
+                        </div>
+                        <div className="bg-indigo-900/20 rounded p-1 border border-indigo-500/10">
+                            <div className="text-indigo-400 font-bold">智慧 SMART</div>
+                            <div className="text-red-300">-400 / 次</div>
+                            <div className="text-white">x 1.2</div>
+                        </div>
+                        <div className="bg-neutral-700/30 rounded p-1 border border-neutral-500/10">
+                            <div className="text-neutral-300 font-bold">困難 HARD</div>
+                            <div className="text-red-300">-300 / 次</div>
+                            <div className="text-white">x 1.5</div>
+                        </div>
+                    </div>
+                    <p className="text-[9px] text-neutral-500 mt-1 italic text-center">
+                        * 難度越高，猜測扣分越少，總分加成越高！
+                    </p>
+                </div>
+              </div>
             </div>
         </div>
-
-        {/* Name Input & Start Action */}
         <div className="p-4 border-t border-white/10 bg-neutral-800/50 flex flex-col gap-3">
              {mode === 'static' && onStart ? (
                 <>
@@ -206,22 +217,33 @@ const LeaderboardModal = ({ onClose }: { onClose: () => void }) => {
   const [loading, setLoading] = useState(true);
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [selectedReplay, setSelectedReplay] = useState<{ nickname: string, guesses: GuessResult[] } | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
-      const data = await fetchLeaderboard();
-      setEntries(data);
-      setLoading(false);
+      try {
+        const data = await fetchLeaderboard();
+        setEntries(data);
+        setErrorMsg(null);
+      } catch (e) {
+        console.error("Fetch error:", e);
+        setErrorMsg("connection_error");
+      } finally {
+        setLoading(false);
+      }
     };
     loadData();
   }, []);
 
+  const isGoogleSandbox = window.location.hostname.includes('googleusercontent.com');
+
   if (!db) {
      return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-             <div className="bg-neutral-900 p-6 rounded-xl border border-red-500/50 text-center">
-                 <p className="text-red-300">Firebase Config Missing.</p>
-                 <button onClick={onClose} className="mt-4 px-4 py-2 bg-neutral-800 rounded">Close</button>
+             <div className="bg-neutral-900 p-6 rounded-xl border border-red-500/50 text-center max-w-sm">
+                 <p className="text-red-300 mb-2">Firebase 連線失敗</p>
+                 <p className="text-neutral-500 text-xs mb-4">請確認您的 API Key 設定與網路連線。</p>
+                 <button onClick={onClose} className="px-4 py-2 bg-neutral-800 rounded text-neutral-300">關閉</button>
              </div>
         </div>
      );
@@ -230,7 +252,6 @@ const LeaderboardModal = ({ onClose }: { onClose: () => void }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="w-[90%] max-w-md h-[80vh] bg-neutral-900 border border-amber-500/30 rounded-2xl shadow-[0_0_50px_rgba(251,191,36,0.1)] relative flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
-        {/* Header */}
         <div className="p-4 flex items-center justify-between border-b border-white/10 bg-neutral-800/50">
            <div className="flex items-center gap-2 text-amber-100 font-serif font-bold tracking-wider">
               {selectedReplay ? (
@@ -248,9 +269,7 @@ const LeaderboardModal = ({ onClose }: { onClose: () => void }) => {
            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-700 transition-colors"><CloseIcon /></button>
         </div>
 
-        {/* Content */}
         {selectedReplay ? (
-          // --- Replay View ---
           <div className="flex-1 flex flex-col overflow-hidden bg-neutral-900/50">
               <div className="p-2 border-b border-white/5 bg-amber-950/20 text-center">
                  <span className="text-[10px] uppercase tracking-[0.2em] text-amber-500 font-bold">Replay: {selectedReplay.nickname}</span>
@@ -260,15 +279,34 @@ const LeaderboardModal = ({ onClose }: { onClose: () => void }) => {
               </div>
           </div>
         ) : (
-          // --- List View ---
           <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
              {loading ? (
                <div className="flex items-center justify-center h-full text-neutral-500 font-mono text-xs">LOADING DATA...</div>
+             ) : errorMsg ? (
+               <div className="flex flex-col items-center justify-center h-full text-center p-4">
+                  <p className="text-red-400 text-xs font-mono mb-2">連接失敗 (Connection Blocked)</p>
+                  <p className="text-neutral-500 text-[10px] mb-2">Google Cloud API Key 拒絕了此請求。</p>
+                  
+                  <div className="bg-neutral-950/80 p-3 rounded-lg border border-red-900/30 text-left w-full">
+                      <p className="text-[10px] text-amber-500 mb-1 font-bold">請將以下網址加入 Google Cloud Console 的 API Key 白名單：</p>
+                      
+                      {isGoogleSandbox ? (
+                         <>
+                            <p className="text-[9px] text-neutral-400 mt-2 mb-1">偵測到您正在使用 AI Studio 預覽，請加入萬用字元：</p>
+                            <div className="bg-neutral-800 p-2 rounded text-emerald-400 text-xs font-mono select-all">*.googleusercontent.com</div>
+                            <p className="text-[9px] text-neutral-500 mt-1 italic">這樣可以支援所有動態產生的預覽網址。</p>
+                         </>
+                      ) : (
+                         <div className="bg-neutral-800 p-2 rounded text-emerald-400 text-xs font-mono select-all mt-1">{window.location.hostname}</div>
+                      )}
+                      
+                      <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="block text-right text-[10px] text-amber-500 hover:underline mt-2">前往設定頁面 &rarr;</a>
+                  </div>
+               </div>
              ) : entries.length === 0 ? (
                <div className="flex items-center justify-center h-full text-neutral-500 font-mono text-xs">NO RECORDS YET</div>
              ) : (
                entries.map((entry, idx) => {
-                 // Rank styling
                  let rankStyle = "bg-neutral-800 text-neutral-400";
                  let borderStyle = "border-white/5";
                  if (idx === 0) { rankStyle = "bg-gradient-to-br from-amber-400 to-amber-600 text-neutral-900 font-bold border-amber-400"; borderStyle = "border-amber-500/50"; }
@@ -290,7 +328,6 @@ const LeaderboardModal = ({ onClose }: { onClose: () => void }) => {
                             <span>{Math.floor(entry.time)}s</span>
                          </div>
                       </div>
-                      {/* Play Replay Button */}
                       {entry.replay_data && entry.replay_data.length > 0 && (
                         <button 
                           onClick={() => setSelectedReplay({ nickname: entry.nickname, guesses: entry.replay_data! })}
@@ -320,7 +357,6 @@ const PositionalAnalysis = ({ possibleAnswers }: { possibleAnswers: string[] }) 
     <div className="flex gap-1.5 h-full items-center">
       {positionalData.map((digits, idx) => {
         const isMasked = digits.length > 3;
-        
         return (
           <div key={idx} className="bg-neutral-900/40 border border-white/5 rounded-md min-w-[34px] h-9 flex items-center justify-center px-1 shadow-inner">
             <div className="flex items-center justify-center gap-0.5">
@@ -351,9 +387,8 @@ const GameHistory = ({ guesses, totalGuesses }: { guesses: GuessResult[], totalG
   return (
     <div className="grid grid-cols-3 gap-2 mt-2 px-1">
       {guesses.map((result, idx) => {
-        // Since guesses are reversed, the first one (index 0) is the latest
         const isLatest = idx === 0;
-        const realIndex = totalGuesses - idx; // Calculate original index (1-based)
+        const realIndex = totalGuesses - idx; 
         
         return (
           <div 
@@ -366,7 +401,6 @@ const GameHistory = ({ guesses, totalGuesses }: { guesses: GuessResult[], totalG
               }
             `}
           >
-             {/* Header: Index | Result */}
              <div className={`
                 flex w-full justify-between items-center px-2 py-1.5 border-b
                 ${isLatest ? 'bg-amber-600 border-amber-500' : 'bg-transparent border-white/5'}
@@ -381,7 +415,6 @@ const GameHistory = ({ guesses, totalGuesses }: { guesses: GuessResult[], totalG
                 </div>
              </div>
              
-             {/* Guess Number Digits */}
              <div className="flex items-center justify-center gap-1 py-2">
                  {result.guess.split('').map((digit, i) => {
                     return (
@@ -415,9 +448,7 @@ const GameReviewList = ({ guesses }: { guesses: GuessResult[] }) => {
     <div className="w-full flex-1 overflow-y-auto px-1 pr-2 space-y-4 custom-scrollbar">
       {steps.map((step) => (
         <div key={step.stepIndex} className="relative pl-5 border-l border-neutral-700 last:border-amber-500/50">
-          {/* Timeline Dot */}
           <div className={`absolute -left-[5px] top-3 w-2.5 h-2.5 rounded-full border-2 border-neutral-800 ${step.stepIndex === steps.length ? 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.6)]' : 'bg-neutral-600'}`}></div>
-          
           <div className="bg-neutral-800/80 rounded-lg p-3 border border-white/10 shadow-sm backdrop-blur-md">
              <div className="flex justify-between items-start mb-2 border-b border-white/10 pb-2">
                 <div className="flex items-center gap-3">
@@ -428,14 +459,10 @@ const GameReviewList = ({ guesses }: { guesses: GuessResult[] }) => {
                     {step.result}
                 </span>
              </div>
-             
-             {/* Text Analysis */}
              <div className="flex flex-col gap-1">
                  <span className="text-xs text-amber-200/90 font-bold font-serif">{step.comment}</span>
                  <span className="text-[10px] text-neutral-300 leading-relaxed">{step.insight}</span>
              </div>
-
-             {/* Progress Bar for Reduction */}
              <div className="mt-2 flex items-center gap-2 opacity-90">
                  <div className="flex-1 h-0.5 bg-neutral-700 rounded-full overflow-hidden">
                      <div className="h-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" style={{width: `${step.reductionPercent}%`}}></div>
@@ -445,8 +472,6 @@ const GameReviewList = ({ guesses }: { guesses: GuessResult[] }) => {
           </div>
         </div>
       ))}
-      
-      {/* End Badge */}
       <div className="flex justify-center mt-6 mb-4">
           <div className="bg-amber-950/30 text-amber-200 border border-amber-500/20 px-6 py-2 rounded-full text-xs font-serif font-bold tracking-widest shadow-[0_0_20px_rgba(245,158,11,0.1)]">
               MISSION ACCOMPLISHED
@@ -462,7 +487,6 @@ const GameReviewList = ({ guesses }: { guesses: GuessResult[] }) => {
 type Difficulty = 'easy' | 'hard' | 'smart';
 
 export default function App() {
-  // Game State
   const [gameState, setGameState] = useState<GameState>({
     secret: generateSecret(),
     guesses: [],
@@ -472,17 +496,17 @@ export default function App() {
   const [input, setInput] = useState('');
   const [difficulty, setDifficulty] = useState<Difficulty>('smart');
   const [showRules, setShowRules] = useState(false);
-  const [showLeaderboard, setShowLeaderboard] = useState(false); // New Leaderboard State
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
-  
-  // Timer & Scoring State
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [finalScore, setFinalScore] = useState(0);
   const [userName, setUserName] = useState('');
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
+  // New state for error modal
+  const [permissionError, setPermissionError] = useState(false);
 
-  // Initialize User Name
   useEffect(() => {
+    console.log("🔥 Current Origin for Firebase Whitelist:", window.location.hostname);
     const storedName = localStorage.getItem('1a2b_username');
     if (storedName) {
       setUserName(storedName);
@@ -491,7 +515,6 @@ export default function App() {
     }
   }, []);
 
-  // Timer Effect
   useEffect(() => {
     let interval: any;
     if (hasStarted && gameState.status === 'playing') {
@@ -502,22 +525,26 @@ export default function App() {
     return () => clearInterval(interval);
   }, [hasStarted, gameState.status]);
 
-  // Scoring Calculation
   const calculateScore = (guesses: number, time: number, mode: Difficulty) => {
     const BASE_SCORE = 10000;
-    const GUESS_PENALTY = 500;
     const TIME_PENALTY = 10;
-    
+    let guessPenalty = 500;
     let multiplier = 1.0;
-    if (mode === 'smart') multiplier = 1.2;
-    if (mode === 'hard') multiplier = 1.5;
 
-    let rawScore = BASE_SCORE - (guesses * GUESS_PENALTY) - (time * TIME_PENALTY);
+    if (mode === 'smart') {
+      guessPenalty = 400;
+      multiplier = 1.2;
+    }
+    if (mode === 'hard') {
+      guessPenalty = 300;
+      multiplier = 1.5;
+    }
+
+    let rawScore = BASE_SCORE - (guesses * guessPenalty) - (time * TIME_PENALTY);
     if (rawScore < 0) rawScore = 0;
     return Math.floor(rawScore * multiplier);
   };
 
-  // Calculation Hooks
   const impossibleDigits = useMemo(() => getImpossibleDigits(gameState.possibleAnswers), [gameState.possibleAnswers]);
   const confirmedPositions = useMemo(() => getConfirmedPositions(gameState.possibleAnswers), [gameState.possibleAnswers]);
   const digitProbabilities = useMemo(() => getDigitProbabilities(gameState.possibleAnswers), [gameState.possibleAnswers]);
@@ -526,10 +553,8 @@ export default function App() {
   const showMemoryHints = (difficulty === 'easy' && !isHintLocked) || difficulty === 'smart';
   const showPredictionHints = (difficulty === 'easy' && !isHintLocked);
 
-  // Scroll ref
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to top when guesses change
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = 0;
@@ -546,7 +571,6 @@ export default function App() {
     setInput('');
     setTimeElapsed(0);
     setScoreSubmitted(false);
-    // userName is kept from state/localstorage
   };
 
   const handleStartGame = () => {
@@ -558,23 +582,19 @@ export default function App() {
 
   const handleGuess = () => {
     if (input.length !== 4) return;
-
     const { a, b } = calculateAB(gameState.secret, input);
     const nextPool = filterPossibilities(gameState.possibleAnswers, input, a, b);
     const newGuess: GuessResult = { guess: input, a, b };
     const newStatus = a === 4 ? 'won' : 'playing';
-
     if (newStatus === 'won') {
         setFinalScore(calculateScore(gameState.guesses.length + 1, timeElapsed, difficulty));
     }
-
     setGameState(prev => ({
       ...prev,
       guesses: [...prev.guesses, newGuess],
       possibleAnswers: nextPool,
       status: newStatus,
     }));
-
     setInput('');
   };
 
@@ -591,8 +611,7 @@ export default function App() {
   const handleSubmitScore = async () => {
     if (!userName.trim()) return;
     
-    // Add replay data (guesses) to the submission
-    const success = await submitScore({
+    const result = await submitScore({
         nickname: userName.trim(),
         score: finalScore,
         difficulty,
@@ -601,39 +620,66 @@ export default function App() {
         replay_data: gameState.guesses
     });
 
-    if (success) {
+    if (result.success) {
       setScoreSubmitted(true);
-      setShowLeaderboard(true); // Auto show leaderboard after submit
+      setShowLeaderboard(true); 
     } else {
-      alert("Submission failed. Please check Firebase permissions or network connection.");
+      if (result.errorType === 'permission') {
+         setPermissionError(true);
+      } else {
+         alert(`提交失敗。\n請確認您已在 Google Cloud Console 加入網域白名單：\n${window.location.hostname}`);
+      }
     }
   };
 
-  // Derived state for display
-  const reversedGuesses = [...gameState.guesses].reverse(); // Show latest first
+  const reversedGuesses = [...gameState.guesses].reverse();
   const remainingCount = gameState.possibleAnswers.length;
 
   return (
     <div className="flex flex-col h-[100dvh] w-full max-w-md mx-auto relative text-neutral-100 overflow-hidden font-sans bg-black">
       <LuxuryBackground />
       
-      {/* Intro Screen / Rules Modal */}
+      {/* Rules Error Modal (Security Rules) */}
+      {permissionError && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+            <div className="bg-neutral-900 border border-red-500 rounded-xl p-6 max-w-lg w-full flex flex-col gap-4 shadow-2xl">
+               <div className="flex items-center gap-2 text-red-500 font-bold text-lg">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  權限不足 (Permission Denied)
+               </div>
+               <p className="text-neutral-300 text-sm">您的 Firebase 安全性規則拒絕了這次寫入。請前往 Firebase Console 的 <strong>Firestore Database &gt; Rules</strong> 標籤，將內容替換為以下代碼：</p>
+               
+               <div className="bg-neutral-950 p-3 rounded border border-white/10 font-mono text-[10px] text-emerald-400 overflow-x-auto select-all">
+<pre>{`rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /leaderboard/{document=**} {
+      allow read: if true;
+      allow create: if request.resource.data.score is number;
+    }
+  }
+}`}</pre>
+               </div>
+               <p className="text-neutral-500 text-xs italic">* 此規則為開發用寬鬆模式，發布前可再加強。</p>
+               <button 
+                 onClick={() => setPermissionError(false)}
+                 className="mt-2 w-full py-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded font-bold"
+               >
+                 關閉
+               </button>
+            </div>
+        </div>
+      )}
+
       {!hasStarted ? (
-         // INTRO SCREEN
          <div className="absolute inset-0 z-50 flex items-center justify-center p-4">
              <div className="absolute inset-0 bg-neutral-950/90 backdrop-blur-xl"></div>
-             
-             {/* Intro Content */}
              <div className="relative z-10 w-full flex flex-col items-center gap-6 animate-in zoom-in-95 duration-700">
-                <div className="scale-150 mb-4">
-                   <GameLogo />
-                </div>
+                <div className="scale-150 mb-4"><GameLogo /></div>
                 <div className="text-center">
                    <h1 className="text-4xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-br from-amber-100 to-amber-600 mb-2 drop-shadow-lg">1A2B</h1>
                    <p className="text-neutral-400 tracking-[0.5em] text-xs uppercase font-mono">Logic Mastermind</p>
                 </div>
-                
-                {/* Embed Static Rules Here */}
                 <GameRulesModal 
                     onClose={() => {}} 
                     mode="static" 
@@ -645,11 +691,9 @@ export default function App() {
          </div>
       ) : (
         <>
-          {/* Rules Overlay (Popup) */}
           {showRules && <GameRulesModal onClose={() => setShowRules(false)} />}
           {showLeaderboard && <LeaderboardModal onClose={() => setShowLeaderboard(false)} />}
 
-          {/* Header */}
           <header className="flex-none p-4 pb-2 flex items-center justify-between z-10">
             <div className="flex items-center gap-3">
                <GameLogo />
@@ -659,7 +703,6 @@ export default function App() {
                </div>
             </div>
             <div className="flex items-center gap-2">
-                {/* Rules Button */}
                 <button 
                   onClick={() => setShowRules(true)}
                   className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-800/80 hover:bg-neutral-700 text-amber-400 border border-white/10 transition-colors shadow-sm"
@@ -667,8 +710,6 @@ export default function App() {
                 >
                   <InfoIcon />
                 </button>
-                
-                {/* Leaderboard Button */}
                 <button 
                   onClick={() => setShowLeaderboard(true)}
                   className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-800/80 hover:bg-neutral-700 text-amber-500 border border-white/10 transition-colors shadow-sm"
@@ -676,30 +717,11 @@ export default function App() {
                 >
                   <TrophyIcon />
                 </button>
-
-                {/* Segmented Control for Difficulty */}
                 <div className="flex bg-neutral-800/80 backdrop-blur-md rounded-lg p-1 border border-white/10 shadow-lg">
-                   <button 
-                     onClick={() => setDifficulty('easy')}
-                     className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all tracking-wider ${difficulty === 'easy' ? 'bg-amber-600/90 text-white shadow-md' : 'text-neutral-400 hover:text-neutral-200'}`}
-                   >
-                     簡單
-                   </button>
-                   <button 
-                     onClick={() => setDifficulty('smart')}
-                     className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all tracking-wider flex items-center gap-1.5 ${difficulty === 'smart' ? 'bg-indigo-600/90 text-white shadow-md' : 'text-neutral-400 hover:text-neutral-200'}`}
-                   >
-                     <BrainIcon />
-                     智慧
-                   </button>
-                   <button 
-                     onClick={() => setDifficulty('hard')}
-                     className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all tracking-wider ${difficulty === 'hard' ? 'bg-neutral-600/90 text-white shadow-md' : 'text-neutral-400 hover:text-neutral-200'}`}
-                   >
-                     困難
-                   </button>
+                   <button onClick={() => setDifficulty('easy')} className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all tracking-wider ${difficulty === 'easy' ? 'bg-amber-600/90 text-white shadow-md' : 'text-neutral-400 hover:text-neutral-200'}`}>簡單</button>
+                   <button onClick={() => setDifficulty('smart')} className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all tracking-wider flex items-center gap-1.5 ${difficulty === 'smart' ? 'bg-indigo-600/90 text-white shadow-md' : 'text-neutral-400 hover:text-neutral-200'}`}><BrainIcon />智慧</button>
+                   <button onClick={() => setDifficulty('hard')} className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all tracking-wider ${difficulty === 'hard' ? 'bg-neutral-600/90 text-white shadow-md' : 'text-neutral-400 hover:text-neutral-200'}`}>困難</button>
                 </div>
-                
                 <button 
                   onClick={handleRestart}
                   className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-800/80 hover:bg-neutral-700 text-neutral-300 hover:text-amber-200 border border-white/10 transition-colors shadow-sm"
@@ -710,24 +732,15 @@ export default function App() {
             </div>
           </header>
 
-          {/* Main Content Area - Scrollable */}
           <main className="flex-1 overflow-y-auto px-5 pb-2 z-10 custom-scrollbar flex flex-col" ref={scrollRef}>
-            
             {gameState.status === 'won' ? (
-               // --- WIN STATE ---
                <div className="flex-1 flex flex-col items-center animate-in zoom-in-95 duration-700 ease-out pb-4">
                   <div className="mt-6 mb-4 text-center relative">
                       <div className="absolute inset-0 bg-amber-500/20 blur-3xl rounded-full"></div>
-                      <h2 className="relative text-4xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-b from-amber-100 to-amber-500 drop-shadow-[0_2px_10px_rgba(245,158,11,0.3)] tracking-widest">
-                          VICTORY
-                      </h2>
+                      <h2 className="relative text-4xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-b from-amber-100 to-amber-500 drop-shadow-[0_2px_10px_rgba(245,158,11,0.3)] tracking-widest">VICTORY</h2>
                       <div className="h-px w-24 bg-gradient-to-r from-transparent via-amber-500 to-transparent mx-auto my-2"></div>
-                      <p className="text-neutral-400 text-xs font-mono tracking-widest uppercase relative z-10">
-                          Attempts: <span className="text-amber-100 font-bold text-lg">{gameState.guesses.length}</span>
-                      </p>
+                      <p className="text-neutral-400 text-xs font-mono tracking-widest uppercase relative z-10">Attempts: <span className="text-amber-100 font-bold text-lg">{gameState.guesses.length}</span></p>
                   </div>
-
-                  {/* High Score Submission Panel */}
                   {!scoreSubmitted && db && (
                       <div className="w-full bg-neutral-900/80 border border-amber-500/40 rounded-xl p-4 mb-4 backdrop-blur-md shadow-[0_0_30px_rgba(245,158,11,0.15)] flex flex-col items-center gap-3">
                            <div className="flex flex-col items-center">
@@ -748,8 +761,6 @@ export default function App() {
                            </div>
                       </div>
                   )}
-                  
-                  {/* Review Timeline */}
                   <div className="w-full flex-1 bg-neutral-900/60 rounded-2xl border border-white/10 p-1 mb-4 flex flex-col overflow-hidden relative backdrop-blur-xl shadow-2xl">
                       <div className="px-4 py-3 text-xs text-neutral-400 font-bold uppercase tracking-[0.2em] flex items-center gap-2 border-b border-white/5">
                         <HistoryIcon />
@@ -761,16 +772,9 @@ export default function App() {
                   </div>
                </div>
             ) : (
-              // --- PLAYING STATE ---
               <div className="flex flex-col gap-3 min-h-min pb-24">
-                
-                {/* Analysis Panel (Stats) - COMPACT ROW LAYOUT */}
                 <div className="bg-neutral-800/80 rounded-xl p-3 border border-white/10 backdrop-blur-md shadow-lg flex items-center justify-between relative overflow-hidden h-14">
-                     
-                     {/* Progress Bar Background (Bottom Line) */}
                      <div className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-amber-600 via-amber-400 to-transparent transition-all duration-700" style={{ width: `${(100 - (remainingCount / 5040) * 100)}%` }}></div>
-                     
-                     {/* Stats */}
                      <div className="flex items-center gap-4">
                          <div className="flex flex-col">
                             <span className="text-[8px] text-neutral-500 font-mono uppercase tracking-widest">剩餘</span>
@@ -782,38 +786,27 @@ export default function App() {
                             <span className="text-xs font-bold text-neutral-400 font-mono leading-none">{(100 - (remainingCount / 5040) * 100).toFixed(1)}%</span>
                          </div>
                      </div>
-                     
-                     {/* Positional Analysis */}
                      {remainingCount < 50 && remainingCount > 0 && (
                          <div className="animate-in fade-in slide-in-from-right-4">
                             <PositionalAnalysis possibleAnswers={gameState.possibleAnswers} />
                          </div>
                      )}
                 </div>
-
-                {/* Game History List */}
                 <div className="flex-1">
                    <GameHistory guesses={reversedGuesses} totalGuesses={gameState.guesses.length} />
                 </div>
-
               </div>
             )}
           </main>
-
-          {/* Footer Input Area (Only when playing) */}
           {gameState.status === 'playing' && (
             <footer className="flex-none pt-2 pb-6 px-4 z-20 bg-gradient-to-t from-neutral-950 via-neutral-950/95 to-transparent flex flex-col items-center">
-               {/* Input Display */}
                <div className="flex gap-3 mb-2">
                   {[0, 1, 2, 3].map((i) => (
                     <div
                       key={i}
                       className={`
                         w-10 h-12 rounded-lg border flex items-center justify-center text-2xl font-mono font-bold shadow-inner backdrop-blur-sm transition-all duration-200
-                        ${input[i] 
-                          ? 'bg-neutral-800/80 border-amber-500/50 text-amber-100 shadow-[0_0_10px_rgba(245,158,11,0.1)]' 
-                          : 'bg-neutral-900/40 border-white/5'
-                        }
+                        ${input[i] ? 'bg-neutral-800/80 border-amber-500/50 text-amber-100 shadow-[0_0_10px_rgba(245,158,11,0.1)]' : 'bg-neutral-900/40 border-white/5'}
                         ${i === input.length ? 'ring-1 ring-amber-500/30 bg-white/5' : ''}
                       `}
                     >
@@ -821,8 +814,6 @@ export default function App() {
                     </div>
                   ))}
                </div>
-
-               {/* Keypad */}
                <NumberPad
                  onDigitClick={handleDigitClick}
                  onDelete={handleDelete}
@@ -836,8 +827,6 @@ export default function App() {
                />
             </footer>
           )}
-          
-          {/* Win State Footer Action */}
           {gameState.status === 'won' && (
              <footer className="flex-none p-6 z-20 bg-neutral-900 border-t border-white/5 flex items-center justify-center">
                  <button 

@@ -15,14 +15,14 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
+let app;
 let db: any = null;
 
 try {
-  const app = initializeApp(firebaseConfig);
+  app = initializeApp(firebaseConfig);
   db = getFirestore(app);
-  console.log("Firebase initialized successfully");
 } catch (e) {
-  console.error("Firebase initialization error:", e);
+  console.error("Firebase initialization error. Please check your config.", e);
 }
 
 export { db };
@@ -35,11 +35,12 @@ export interface LeaderboardEntry {
   difficulty: string;
   guesses: number;
   time: number;
-  replay_data?: GuessResult[]; // Optional for backward compatibility
+  replay_data?: GuessResult[]; 
   timestamp?: any;
 }
 
-// Helper functions
+// --- Helper functions ---
+
 export const fetchLeaderboard = async (): Promise<LeaderboardEntry[]> => {
   if (!db) return [];
   try {
@@ -48,20 +49,31 @@ export const fetchLeaderboard = async (): Promise<LeaderboardEntry[]> => {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LeaderboardEntry));
   } catch (e) {
     console.error("Error fetching leaderboard:", e);
-    return [];
+    throw e;
   }
 };
 
-export const submitScore = async (entry: Omit<LeaderboardEntry, 'id' | 'timestamp'>): Promise<boolean> => {
-  if (!db) return false;
+export interface SubmitResult {
+  success: boolean;
+  errorType?: 'permission' | 'unknown';
+}
+
+export const submitScore = async (entry: Omit<LeaderboardEntry, 'id' | 'timestamp'>): Promise<SubmitResult> => {
+  if (!db) return { success: false, errorType: 'unknown' };
   try {
     await addDoc(collection(db, "leaderboard"), {
       ...entry,
       timestamp: serverTimestamp()
     });
-    return true;
-  } catch (e) {
+    return { success: true };
+  } catch (e: any) {
     console.error("Error submitting score:", e);
-    return false;
+    
+    // Detect specific Firestore Permission error
+    if (e.code === 'permission-denied') {
+      return { success: false, errorType: 'permission' };
+    }
+    
+    return { success: false, errorType: 'unknown' };
   }
 };

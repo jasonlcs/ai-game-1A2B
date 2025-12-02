@@ -25,6 +25,10 @@ const CloseIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
 );
 
+const StarIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+);
+
 // --- Custom Logo Component ---
 const GameLogo = () => (
   <div className="relative w-8 h-8 flex items-center justify-center">
@@ -207,7 +211,7 @@ const GameHistory = ({ guesses, totalGuesses }: { guesses: GuessResult[], totalG
   if (guesses.length === 0) return null;
 
   return (
-    <div className="grid grid-cols-3 gap-2 mt-2">
+    <div className="grid grid-cols-3 gap-2 mt-2 px-1">
       {guesses.map((result, idx) => {
         // Since guesses are reversed, the first one (index 0) is the latest
         const isLatest = idx === 0;
@@ -217,31 +221,23 @@ const GameHistory = ({ guesses, totalGuesses }: { guesses: GuessResult[], totalG
           <div 
             key={`${result.guess}-${idx}`}
             className={`
-              col-span-1 flex flex-col justify-between items-center rounded-lg border transition-all duration-500 backdrop-blur-sm relative overflow-hidden group
+              col-span-1 flex flex-col justify-between items-center rounded-lg border transition-all duration-300 backdrop-blur-sm relative overflow-hidden group
               ${isLatest 
-                ? 'bg-neutral-800 border-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.25)] z-20 scale-[1.02]' 
-                : 'bg-neutral-900/40 border-white/5 text-neutral-500 opacity-70 scale-100'
+                ? 'bg-neutral-800 border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.25)] z-20 ring-1 ring-amber-500/50' 
+                : 'bg-neutral-900/40 border-white/5 text-neutral-500 opacity-70'
               }
             `}
           >
-             {/* NEW Badge for Latest */}
-             {isLatest && (
-               <div className="absolute top-0 right-0">
-                  <div className="bg-amber-500 text-neutral-900 text-[8px] font-bold px-1.5 py-0.5 rounded-bl-md">
-                    NEW
-                  </div>
-               </div>
-             )}
-
              {/* Header: Index | Result */}
              <div className={`
                 flex w-full justify-between items-center px-2 py-1.5 border-b
                 ${isLatest ? 'bg-amber-600 border-amber-500' : 'bg-transparent border-white/5'}
              `}>
-                <span className={`text-[9px] font-mono ${isLatest ? 'text-neutral-900 font-extrabold' : 'text-neutral-600'}`}>
+                <span className={`text-[9px] font-mono flex items-center gap-0.5 ${isLatest ? 'text-neutral-900 font-extrabold' : 'text-neutral-600'}`}>
                   #{realIndex.toString().padStart(2, '0')}
+                  {isLatest && <span className="text-amber-900 animate-pulse"><StarIcon /></span>}
                 </span>
-                <div className={`font-mono font-bold text-[10px] flex gap-0.5 ${isLatest ? 'text-neutral-900' : ''}`}>
+                <div className={`font-mono font-bold flex gap-0.5 items-baseline ${isLatest ? 'text-sm' : 'text-[10px]'}`}>
                   <span className={isLatest ? "text-white drop-shadow-sm" : (result.a === 4 ? "text-emerald-500" : "text-neutral-500")}>{result.a}A</span>
                   <span className={isLatest ? "text-white drop-shadow-sm" : (result.b > 0 ? "text-amber-500" : "text-neutral-600")}>{result.b}B</span>
                 </div>
@@ -545,7 +541,7 @@ export default function App() {
                 </div>
 
                 {/* Game History List */}
-                <div className="flex-1 overflow-y-auto custom-scrollbar -mr-2 pr-2">
+                <div className="flex-1">
                    <GameHistory guesses={reversedGuesses} totalGuesses={gameState.guesses.length} />
                 </div>
 

@@ -18,6 +18,14 @@ const BrainIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
 );
 
+const FeatherIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>
+);
+
+const FireIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+);
+
 const InfoIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
 );
@@ -351,11 +359,14 @@ const LeaderboardModal = ({ onClose }: { onClose: () => void }) => {
                          
                          {/* Middle Row: Game Stats Badges */}
                          <div className="flex gap-1.5 flex-wrap">
-                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold font-mono uppercase border ${entry.difficulty === 'hard' ? 'bg-red-900/20 text-red-400 border-red-500/30' : (entry.difficulty === 'smart' ? 'bg-indigo-900/20 text-indigo-400 border-indigo-500/30' : 'bg-amber-900/20 text-amber-400 border-amber-500/30')}`}>
-                              {entry.difficulty}
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold font-mono uppercase border flex items-center gap-1 ${entry.difficulty === 'hard' ? 'bg-red-900/20 text-red-400 border-red-500/30' : (entry.difficulty === 'smart' ? 'bg-indigo-900/20 text-indigo-400 border-indigo-500/30' : 'bg-amber-900/20 text-amber-400 border-amber-500/30')}`}>
+                              {entry.difficulty === 'hard' && <FireIcon />}
+                              {entry.difficulty === 'smart' && <BrainIcon />}
+                              {entry.difficulty === 'easy' && <FeatherIcon />}
+                              {entry.difficulty.toUpperCase()}
                             </span>
                             <span className="px-1.5 py-0.5 rounded text-[9px] font-mono border border-white/10 bg-neutral-800 text-neutral-400">
-                               {entry.guesses} G
+                               {entry.guesses} Guess
                             </span>
                             <span className="px-1.5 py-0.5 rounded text-[9px] font-mono border border-white/10 bg-neutral-800 text-neutral-400">
                                {entry.time}s
@@ -787,9 +798,9 @@ service cloud.firestore {
                   <TrophyIcon />
                 </button>
                 <div className="flex bg-neutral-800/80 backdrop-blur-md rounded-lg p-1 border border-white/10 shadow-lg">
-                   <button onClick={() => setDifficulty('easy')} className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all tracking-wider ${difficulty === 'easy' ? 'bg-amber-600/90 text-white shadow-md' : 'text-neutral-400 hover:text-neutral-200'}`}>簡單</button>
-                   <button onClick={() => setDifficulty('smart')} className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all tracking-wider flex items-center gap-1.5 ${difficulty === 'smart' ? 'bg-indigo-600/90 text-white shadow-md' : 'text-neutral-400 hover:text-neutral-200'}`}><BrainIcon />智慧</button>
-                   <button onClick={() => setDifficulty('hard')} className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all tracking-wider ${difficulty === 'hard' ? 'bg-neutral-600/90 text-white shadow-md' : 'text-neutral-400 hover:text-neutral-200'}`}>困難</button>
+                   <button onClick={() => setDifficulty('easy')} className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all tracking-wider flex items-center gap-1 ${difficulty === 'easy' ? 'bg-amber-600/90 text-white shadow-md' : 'text-neutral-400 hover:text-neutral-200'}`}><FeatherIcon />簡單</button>
+                   <button onClick={() => setDifficulty('smart')} className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all tracking-wider flex items-center gap-1 ${difficulty === 'smart' ? 'bg-indigo-600/90 text-white shadow-md' : 'text-neutral-400 hover:text-neutral-200'}`}><BrainIcon />智慧</button>
+                   <button onClick={() => setDifficulty('hard')} className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all tracking-wider flex items-center gap-1 ${difficulty === 'hard' ? 'bg-neutral-600/90 text-white shadow-md' : 'text-neutral-400 hover:text-neutral-200'}`}><FireIcon />困難</button>
                 </div>
                 <button 
                   onClick={handleRestart}

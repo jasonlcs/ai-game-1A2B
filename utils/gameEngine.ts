@@ -38,6 +38,16 @@ export const generateSecret = (): string => {
 };
 
 /**
+ * Generates a random player name (e.g., Guest_8392)
+ */
+export const generateRandomName = (): string => {
+  const prefix = ["Guest", "Player", "Agent", "Master", "Solver"];
+  const randomPrefix = prefix[Math.floor(Math.random() * prefix.length)];
+  const randomNum = Math.floor(Math.random() * 9000) + 1000;
+  return `${randomPrefix}_${randomNum}`;
+};
+
+/**
  * Calculates A (Bulls) and B (Cows).
  */
 export const calculateAB = (secret: string, guess: string): { a: number; b: number } => {

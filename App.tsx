@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { generateAllCombinations, generateSecret, calculateAB, filterPossibilities, getImpossibleDigits, getConfirmedPositions, getPositionalPossibilities, getDigitProbabilities, generateGameReview, ReviewStep } from './utils/gameEngine';
+import { generateAllCombinations, generateSecret, calculateAB, filterPossibilities, getImpossibleDigits, getConfirmedPositions, getPositionalPossibilities, getDigitProbabilities, generateGameReview, ReviewStep, generateRandomName } from './utils/gameEngine';
 import { GuessResult, GameState } from './types';
 import NumberPad from './components/NumberPad';
+import { db, fetchLeaderboard, submitScore, LeaderboardEntry } from './services/firebase';
 
 // Icons
 const RefreshIcon = () => (
@@ -27,6 +28,18 @@ const CloseIcon = () => (
 
 const StarIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+);
+
+const TrophyIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+);
+
+const PlayIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+);
+
+const ArrowLeftIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
 );
 
 // --- Custom Logo Component ---
@@ -67,8 +80,8 @@ const LuxuryBackground = () => (
 );
 
 
-// --- Sub-component for Game Rules Modal ---
-const GameRulesModal = ({ onClose, mode = 'collapsible', onStart }: { onClose: () => void, mode?: 'collapsible' | 'static', onStart?: () => void }) => {
+// --- Game Rules Modal ---
+const GameRulesModal = ({ onClose, mode = 'collapsible', onStart, initialName = '', onNameChange }: { onClose: () => void, mode?: 'collapsible' | 'static', onStart?: () => void, initialName?: string, onNameChange?: (name: string) => void }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="w-[85%] max-w-md bg-neutral-900 border border-amber-500/30 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] relative flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
@@ -151,15 +164,29 @@ const GameRulesModal = ({ onClose, mode = 'collapsible', onStart }: { onClose: (
             </div>
         </div>
 
-        {/* Footer Action */}
-        <div className="p-4 border-t border-white/10 bg-neutral-800/50">
+        {/* Name Input & Start Action */}
+        <div className="p-4 border-t border-white/10 bg-neutral-800/50 flex flex-col gap-3">
              {mode === 'static' && onStart ? (
-                <button 
-                  onClick={onStart}
-                  className="w-full py-3 rounded-lg bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-neutral-900 font-bold tracking-widest shadow-lg transition-all active:scale-95 text-lg uppercase"
-                >
-                  開始挑戰
-                </button>
+                <>
+                  <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-amber-500 font-bold uppercase tracking-widest">您的暱稱 (用於排行榜)</label>
+                      <input 
+                        type="text" 
+                        maxLength={10} 
+                        value={initialName}
+                        onChange={(e) => onNameChange && onNameChange(e.target.value)}
+                        className="w-full bg-neutral-900 border border-neutral-600 rounded px-3 py-2 font-mono text-white focus:border-amber-500 focus:outline-none"
+                        placeholder="輸入您的名字"
+                      />
+                  </div>
+                  <button 
+                    onClick={onStart}
+                    disabled={!initialName?.trim()}
+                    className="w-full py-3 rounded-lg bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-neutral-900 font-bold tracking-widest shadow-lg transition-all active:scale-95 text-lg uppercase disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    開始挑戰
+                  </button>
+                </>
              ) : (
                 <button 
                   onClick={onClose}
@@ -173,6 +200,117 @@ const GameRulesModal = ({ onClose, mode = 'collapsible', onStart }: { onClose: (
     </div>
   );
 };
+
+// --- Leaderboard Modal ---
+const LeaderboardModal = ({ onClose }: { onClose: () => void }) => {
+  const [loading, setLoading] = useState(true);
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [selectedReplay, setSelectedReplay] = useState<{ nickname: string, guesses: GuessResult[] } | null>(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      const data = await fetchLeaderboard();
+      setEntries(data);
+      setLoading(false);
+    };
+    loadData();
+  }, []);
+
+  if (!db) {
+     return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+             <div className="bg-neutral-900 p-6 rounded-xl border border-red-500/50 text-center">
+                 <p className="text-red-300">Firebase Config Missing.</p>
+                 <button onClick={onClose} className="mt-4 px-4 py-2 bg-neutral-800 rounded">Close</button>
+             </div>
+        </div>
+     );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="w-[90%] max-w-md h-[80vh] bg-neutral-900 border border-amber-500/30 rounded-2xl shadow-[0_0_50px_rgba(251,191,36,0.1)] relative flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
+        {/* Header */}
+        <div className="p-4 flex items-center justify-between border-b border-white/10 bg-neutral-800/50">
+           <div className="flex items-center gap-2 text-amber-100 font-serif font-bold tracking-wider">
+              {selectedReplay ? (
+                <button onClick={() => setSelectedReplay(null)} className="flex items-center gap-1 hover:text-white transition-colors">
+                  <ArrowLeftIcon />
+                  <span>BACK</span>
+                </button>
+              ) : (
+                <>
+                  <TrophyIcon />
+                  <span>GLOBAL ELITE</span>
+                </>
+              )}
+           </div>
+           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-700 transition-colors"><CloseIcon /></button>
+        </div>
+
+        {/* Content */}
+        {selectedReplay ? (
+          // --- Replay View ---
+          <div className="flex-1 flex flex-col overflow-hidden bg-neutral-900/50">
+              <div className="p-2 border-b border-white/5 bg-amber-950/20 text-center">
+                 <span className="text-[10px] uppercase tracking-[0.2em] text-amber-500 font-bold">Replay: {selectedReplay.nickname}</span>
+              </div>
+              <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
+                 <GameReviewList guesses={selectedReplay.guesses} />
+              </div>
+          </div>
+        ) : (
+          // --- List View ---
+          <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
+             {loading ? (
+               <div className="flex items-center justify-center h-full text-neutral-500 font-mono text-xs">LOADING DATA...</div>
+             ) : entries.length === 0 ? (
+               <div className="flex items-center justify-center h-full text-neutral-500 font-mono text-xs">NO RECORDS YET</div>
+             ) : (
+               entries.map((entry, idx) => {
+                 // Rank styling
+                 let rankStyle = "bg-neutral-800 text-neutral-400";
+                 let borderStyle = "border-white/5";
+                 if (idx === 0) { rankStyle = "bg-gradient-to-br from-amber-400 to-amber-600 text-neutral-900 font-bold border-amber-400"; borderStyle = "border-amber-500/50"; }
+                 else if (idx === 1) { rankStyle = "bg-gradient-to-br from-slate-300 to-slate-400 text-neutral-900 font-bold border-slate-300"; borderStyle = "border-slate-400/50"; }
+                 else if (idx === 2) { rankStyle = "bg-gradient-to-br from-orange-400 to-orange-700 text-white font-bold border-orange-500"; borderStyle = "border-orange-600/50"; }
+
+                 return (
+                   <div key={idx} className={`flex items-center p-3 rounded-lg border ${borderStyle} bg-neutral-900/50 hover:bg-neutral-800/80 transition-colors group`}>
+                      <div className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-serif ${rankStyle}`}>
+                         {idx + 1}
+                      </div>
+                      <div className="flex-1 ml-4 min-w-0">
+                         <div className="flex justify-between items-baseline">
+                            <span className="font-mono font-bold text-amber-100 text-lg tracking-widest truncate">{entry.nickname}</span>
+                            <span className="font-mono font-bold text-amber-400 text-lg">{entry.score.toLocaleString()}</span>
+                         </div>
+                         <div className="flex justify-between text-[10px] text-neutral-500 font-mono mt-1 uppercase">
+                            <span>{entry.difficulty} • {entry.guesses} Guesses</span>
+                            <span>{Math.floor(entry.time)}s</span>
+                         </div>
+                      </div>
+                      {/* Play Replay Button */}
+                      {entry.replay_data && entry.replay_data.length > 0 && (
+                        <button 
+                          onClick={() => setSelectedReplay({ nickname: entry.nickname, guesses: entry.replay_data! })}
+                          className="ml-2 w-8 h-8 flex items-center justify-center rounded-full bg-neutral-800 text-neutral-500 hover:bg-amber-500 hover:text-neutral-900 transition-all opacity-50 group-hover:opacity-100"
+                          title="Watch Replay"
+                        >
+                          <PlayIcon />
+                        </button>
+                      )}
+                   </div>
+                 );
+               })
+             )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 
 // --- Sub-component for Positional Analysis ---
 const PositionalAnalysis = ({ possibleAnswers }: { possibleAnswers: string[] }) => {
@@ -334,7 +472,50 @@ export default function App() {
   const [input, setInput] = useState('');
   const [difficulty, setDifficulty] = useState<Difficulty>('smart');
   const [showRules, setShowRules] = useState(false);
-  const [hasStarted, setHasStarted] = useState(false); // New state for Intro Screen
+  const [showLeaderboard, setShowLeaderboard] = useState(false); // New Leaderboard State
+  const [hasStarted, setHasStarted] = useState(false);
+  
+  // Timer & Scoring State
+  const [timeElapsed, setTimeElapsed] = useState(0);
+  const [finalScore, setFinalScore] = useState(0);
+  const [userName, setUserName] = useState('');
+  const [scoreSubmitted, setScoreSubmitted] = useState(false);
+
+  // Initialize User Name
+  useEffect(() => {
+    const storedName = localStorage.getItem('1a2b_username');
+    if (storedName) {
+      setUserName(storedName);
+    } else {
+      setUserName(generateRandomName());
+    }
+  }, []);
+
+  // Timer Effect
+  useEffect(() => {
+    let interval: any;
+    if (hasStarted && gameState.status === 'playing') {
+      interval = setInterval(() => {
+        setTimeElapsed(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [hasStarted, gameState.status]);
+
+  // Scoring Calculation
+  const calculateScore = (guesses: number, time: number, mode: Difficulty) => {
+    const BASE_SCORE = 10000;
+    const GUESS_PENALTY = 500;
+    const TIME_PENALTY = 10;
+    
+    let multiplier = 1.0;
+    if (mode === 'smart') multiplier = 1.2;
+    if (mode === 'hard') multiplier = 1.5;
+
+    let rawScore = BASE_SCORE - (guesses * GUESS_PENALTY) - (time * TIME_PENALTY);
+    if (rawScore < 0) rawScore = 0;
+    return Math.floor(rawScore * multiplier);
+  };
 
   // Calculation Hooks
   const impossibleDigits = useMemo(() => getImpossibleDigits(gameState.possibleAnswers), [gameState.possibleAnswers]);
@@ -363,10 +544,16 @@ export default function App() {
       status: 'playing',
     });
     setInput('');
+    setTimeElapsed(0);
+    setScoreSubmitted(false);
+    // userName is kept from state/localstorage
   };
 
   const handleStartGame = () => {
-    setHasStarted(true);
+    if (userName.trim()) {
+      localStorage.setItem('1a2b_username', userName.trim());
+      setHasStarted(true);
+    }
   };
 
   const handleGuess = () => {
@@ -375,12 +562,17 @@ export default function App() {
     const { a, b } = calculateAB(gameState.secret, input);
     const nextPool = filterPossibilities(gameState.possibleAnswers, input, a, b);
     const newGuess: GuessResult = { guess: input, a, b };
+    const newStatus = a === 4 ? 'won' : 'playing';
+
+    if (newStatus === 'won') {
+        setFinalScore(calculateScore(gameState.guesses.length + 1, timeElapsed, difficulty));
+    }
 
     setGameState(prev => ({
       ...prev,
       guesses: [...prev.guesses, newGuess],
       possibleAnswers: nextPool,
-      status: a === 4 ? 'won' : 'playing',
+      status: newStatus,
     }));
 
     setInput('');
@@ -394,6 +586,27 @@ export default function App() {
 
   const handleDelete = () => {
     setInput(prev => prev.slice(0, -1));
+  };
+
+  const handleSubmitScore = async () => {
+    if (!userName.trim()) return;
+    
+    // Add replay data (guesses) to the submission
+    const success = await submitScore({
+        nickname: userName.trim(),
+        score: finalScore,
+        difficulty,
+        guesses: gameState.guesses.length,
+        time: timeElapsed,
+        replay_data: gameState.guesses
+    });
+
+    if (success) {
+      setScoreSubmitted(true);
+      setShowLeaderboard(true); // Auto show leaderboard after submit
+    } else {
+      alert("Submission failed. Please check Firebase permissions or network connection.");
+    }
   };
 
   // Derived state for display
@@ -421,13 +634,20 @@ export default function App() {
                 </div>
                 
                 {/* Embed Static Rules Here */}
-                <GameRulesModal onClose={() => {}} mode="static" onStart={handleStartGame} />
+                <GameRulesModal 
+                    onClose={() => {}} 
+                    mode="static" 
+                    onStart={handleStartGame} 
+                    initialName={userName}
+                    onNameChange={setUserName}
+                />
              </div>
          </div>
       ) : (
         <>
           {/* Rules Overlay (Popup) */}
           {showRules && <GameRulesModal onClose={() => setShowRules(false)} />}
+          {showLeaderboard && <LeaderboardModal onClose={() => setShowLeaderboard(false)} />}
 
           {/* Header */}
           <header className="flex-none p-4 pb-2 flex items-center justify-between z-10">
@@ -446,6 +666,15 @@ export default function App() {
                   title="遊戲規則"
                 >
                   <InfoIcon />
+                </button>
+                
+                {/* Leaderboard Button */}
+                <button 
+                  onClick={() => setShowLeaderboard(true)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-800/80 hover:bg-neutral-700 text-amber-500 border border-white/10 transition-colors shadow-sm"
+                  title="排行榜"
+                >
+                  <TrophyIcon />
                 </button>
 
                 {/* Segmented Control for Difficulty */}
@@ -486,7 +715,7 @@ export default function App() {
             
             {gameState.status === 'won' ? (
                // --- WIN STATE ---
-               <div className="flex-1 flex flex-col items-center animate-in zoom-in-95 duration-700 ease-out">
+               <div className="flex-1 flex flex-col items-center animate-in zoom-in-95 duration-700 ease-out pb-4">
                   <div className="mt-6 mb-4 text-center relative">
                       <div className="absolute inset-0 bg-amber-500/20 blur-3xl rounded-full"></div>
                       <h2 className="relative text-4xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-b from-amber-100 to-amber-500 drop-shadow-[0_2px_10px_rgba(245,158,11,0.3)] tracking-widest">
@@ -497,6 +726,28 @@ export default function App() {
                           Attempts: <span className="text-amber-100 font-bold text-lg">{gameState.guesses.length}</span>
                       </p>
                   </div>
+
+                  {/* High Score Submission Panel */}
+                  {!scoreSubmitted && db && (
+                      <div className="w-full bg-neutral-900/80 border border-amber-500/40 rounded-xl p-4 mb-4 backdrop-blur-md shadow-[0_0_30px_rgba(245,158,11,0.15)] flex flex-col items-center gap-3">
+                           <div className="flex flex-col items-center">
+                               <span className="text-[10px] text-amber-500 font-bold tracking-[0.3em] uppercase mb-1">FINAL SCORE</span>
+                               <span className="text-3xl font-mono font-bold text-white drop-shadow-md">{finalScore.toLocaleString()}</span>
+                           </div>
+                           <div className="flex gap-2 w-full items-center justify-between border-t border-white/10 pt-3 mt-1">
+                               <div className="flex flex-col">
+                                   <span className="text-[9px] text-neutral-400 uppercase tracking-wider">Player Name</span>
+                                   <span className="text-amber-100 font-mono font-bold">{userName}</span>
+                               </div>
+                               <button 
+                                  onClick={handleSubmitScore}
+                                  className="px-6 py-2 bg-amber-600 hover:bg-amber-500 text-neutral-900 font-bold rounded text-xs tracking-widest shadow-lg transition-transform active:scale-95"
+                               >
+                                  SUBMIT SCORE
+                               </button>
+                           </div>
+                      </div>
+                  )}
                   
                   {/* Review Timeline */}
                   <div className="w-full flex-1 bg-neutral-900/60 rounded-2xl border border-white/10 p-1 mb-4 flex flex-col overflow-hidden relative backdrop-blur-xl shadow-2xl">

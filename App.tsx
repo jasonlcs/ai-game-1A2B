@@ -265,7 +265,7 @@ const LeaderboardModal = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-[90%] max-w-md h-[80vh] bg-neutral-900 border border-amber-500/30 rounded-2xl shadow-[0_0_50px_rgba(251,191,36,0.1)] relative flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
+      <div className="w-[95%] max-w-md h-[85vh] bg-neutral-900 border border-amber-500/30 rounded-2xl shadow-[0_0_50px_rgba(251,191,36,0.1)] relative flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
         <div className="p-4 flex items-center justify-between border-b border-white/10 bg-neutral-800/50">
            <div className="flex items-center gap-2 text-amber-100 font-serif font-bold tracking-wider">
               {selectedReplay ? (
@@ -290,6 +290,14 @@ const LeaderboardModal = ({ onClose }: { onClose: () => void }) => {
               </div>
               <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
                  <GameReviewList guesses={selectedReplay.guesses} />
+              </div>
+              <div className="p-3 border-t border-white/5 bg-neutral-900">
+                  <button 
+                    onClick={() => setSelectedReplay(null)}
+                    className="w-full py-3 bg-neutral-800 hover:bg-neutral-700 text-amber-500 font-bold text-xs tracking-widest uppercase rounded-lg border border-white/5 shadow-lg"
+                  >
+                    Back to Leaderboard
+                  </button>
               </div>
           </div>
         ) : (
@@ -357,9 +365,9 @@ const LeaderboardModal = ({ onClose }: { onClose: () => void }) => {
                          {/* Bottom Row: Date and Days on Board */}
                          <div className="flex justify-between items-center text-[9px] text-neutral-600 font-mono">
                             <span>{formatDate(entry.timestamp)}</span>
-                            {daysOnBoard > 0 && (
-                                <span className="text-amber-700/80 font-bold">{daysOnBoard} days</span>
-                            )}
+                            <span className={daysOnBoard === 0 ? "text-emerald-500 font-bold" : "text-amber-700/80 font-bold"}>
+                               {daysOnBoard === 0 ? "新進榜" : `霸榜 ${daysOnBoard} 天`}
+                            </span>
                          </div>
                       </div>
                       
@@ -609,6 +617,39 @@ export default function App() {
     }
   }, [gameState.guesses]);
 
+  // Automatic Score Submission Effect
+  useEffect(() => {
+    const autoSubmit = async () => {
+      // Only trigger if won, not submitted yet, has name, and db is connected
+      if (gameState.status === 'won' && !scoreSubmitted && db && userName.trim()) {
+         // Calculate final score using current state (gameState.guesses has just updated)
+         const scoreToSubmit = finalScore > 0 ? finalScore : calculateScore(gameState.guesses.length, timeElapsed, difficulty);
+         
+         // Ensure finalScore state is consistent if it wasn't set yet (safety)
+         if (finalScore === 0) setFinalScore(scoreToSubmit);
+
+         const result = await submitScore({
+            nickname: userName.trim(),
+            score: scoreToSubmit,
+            difficulty,
+            guesses: gameState.guesses.length,
+            time: timeElapsed,
+            replay_data: gameState.guesses
+         });
+
+         if (result.success) {
+           setScoreSubmitted(true);
+           // NOTE: Do not auto-open leaderboard (setShowLeaderboard(true) removed)
+         } else if (result.errorType === 'permission') {
+           setPermissionError(true);
+         }
+      }
+    };
+    
+    autoSubmit();
+  }, [gameState.status]); // Run when status changes to 'won'
+
+
   const handleRestart = () => {
     setGameState({
       secret: generateSecret(),
@@ -619,6 +660,7 @@ export default function App() {
     setInput('');
     setTimeElapsed(0);
     setScoreSubmitted(false);
+    setFinalScore(0);
   };
 
   const handleStartGame = () => {
@@ -634,9 +676,12 @@ export default function App() {
     const nextPool = filterPossibilities(gameState.possibleAnswers, input, a, b);
     const newGuess: GuessResult = { guess: input, a, b };
     const newStatus = a === 4 ? 'won' : 'playing';
+    
     if (newStatus === 'won') {
+        // Set final score state immediately for display
         setFinalScore(calculateScore(gameState.guesses.length + 1, timeElapsed, difficulty));
     }
+
     setGameState(prev => ({
       ...prev,
       guesses: [...prev.guesses, newGuess],
@@ -654,30 +699,6 @@ export default function App() {
 
   const handleDelete = () => {
     setInput(prev => prev.slice(0, -1));
-  };
-
-  const handleSubmitScore = async () => {
-    if (!userName.trim()) return;
-    
-    const result = await submitScore({
-        nickname: userName.trim(),
-        score: finalScore,
-        difficulty,
-        guesses: gameState.guesses.length,
-        time: timeElapsed,
-        replay_data: gameState.guesses
-    });
-
-    if (result.success) {
-      setScoreSubmitted(true);
-      setShowLeaderboard(true); 
-    } else {
-      if (result.errorType === 'permission') {
-         setPermissionError(true);
-      } else {
-         alert(`提交失敗。\n請確認您已在 Google Cloud Console 加入網域白名單：\n${window.location.hostname}`);
-      }
-    }
   };
 
   const reversedGuesses = [...gameState.guesses].reverse();
@@ -789,32 +810,24 @@ service cloud.firestore {
                       <div className="h-px w-24 bg-gradient-to-r from-transparent via-amber-500 to-transparent mx-auto my-2"></div>
                       <p className="text-neutral-400 text-xs font-mono tracking-widest uppercase relative z-10">Attempts: <span className="text-amber-100 font-bold text-lg">{gameState.guesses.length}</span></p>
                   </div>
-                  {!scoreSubmitted && db && (
-                      <div className="w-full bg-neutral-900/80 border border-amber-500/40 rounded-xl p-4 mb-4 backdrop-blur-md shadow-[0_0_30px_rgba(245,158,11,0.15)] flex flex-col items-center gap-3">
-                           <div className="flex flex-col items-center">
-                               <span className="text-[10px] text-amber-500 font-bold tracking-[0.3em] uppercase mb-1">FINAL SCORE</span>
-                               <span className="text-3xl font-mono font-bold text-white drop-shadow-md">{finalScore.toLocaleString()}</span>
-                           </div>
-                           <div className="flex gap-2 w-full items-center justify-between border-t border-white/10 pt-3 mt-1">
-                               <div className="flex flex-col">
-                                   <span className="text-[9px] text-neutral-400 uppercase tracking-wider">Player Name</span>
-                                   <span className="text-amber-100 font-mono font-bold">{userName}</span>
-                               </div>
-                               <button 
-                                  onClick={handleSubmitScore}
-                                  className="px-6 py-2 bg-amber-600 hover:bg-amber-500 text-neutral-900 font-bold rounded text-xs tracking-widest shadow-lg transition-transform active:scale-95"
-                               >
-                                  SUBMIT SCORE
-                               </button>
-                           </div>
-                      </div>
-                  )}
+                  
+                  {/* Final Score Card (Display Only) */}
+                  <div className="w-full bg-neutral-900/80 border border-amber-500/40 rounded-xl p-4 mb-4 backdrop-blur-md shadow-[0_0_30px_rgba(245,158,11,0.15)] flex flex-col items-center gap-3">
+                       <div className="flex flex-col items-center">
+                           <span className="text-[10px] text-amber-500 font-bold tracking-[0.3em] uppercase mb-1">FINAL SCORE</span>
+                           <span className="text-3xl font-mono font-bold text-white drop-shadow-md">{finalScore.toLocaleString()}</span>
+                       </div>
+                       <div className="text-[10px] text-neutral-500 font-mono uppercase tracking-widest mt-1">
+                            Player: <span className="text-amber-100 font-bold">{userName}</span>
+                       </div>
+                  </div>
+
                   <div className="w-full flex-1 bg-neutral-900/60 rounded-2xl border border-white/10 p-1 mb-4 flex flex-col overflow-hidden relative backdrop-blur-xl shadow-2xl">
                       <div className="px-4 py-3 text-xs text-neutral-400 font-bold uppercase tracking-[0.2em] flex items-center gap-2 border-b border-white/5">
                         <HistoryIcon />
                         Analysis Log
                       </div>
-                      <div className="flex-1 overflow-hidden p-2">
+                      <div className="flex-1 overflow-hidden p-2 overflow-y-auto custom-scrollbar">
                          <GameReviewList guesses={gameState.guesses} />
                       </div>
                   </div>

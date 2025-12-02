@@ -190,7 +190,6 @@ export interface ReviewStep {
   candidatesBefore: number;
   candidatesAfter: number;
   reductionPercent: number;
-  comment: string;
   insight: string; // Specific logic (e.g. "Excluded 5, Locked Pos 1")
 }
 
@@ -233,23 +232,8 @@ export const generateGameReview = (guesses: { guess: string; a: number; b: numbe
     const diff = beforeCount - afterCount;
     const percent = beforeCount > 0 ? (diff / beforeCount) * 100 : 0;
     
-    // Generate Comment (Tone/Evaluation)
-    let comment = "";
-    if (g.a === 4) {
-      comment = "🏆 完美解碼";
-    } else if (afterCount === 1 && beforeCount > 1) {
-      comment = "🎯 鎖定唯一解";
-    } else if (percent >= 90) {
-      comment = "✨ 神級過濾";
-    } else if (percent >= 70) {
-      comment = "🔥 重大進展";
-    } else if (percent >= 40) {
-      comment = "👍 有效縮減";
-    } else {
-      comment = "🤔 些微過濾";
-    }
-
-    // Generate Insight String (Specific Logic)
+    // Generate Insight String (Specific Logic ONLY)
+    // We removed comments and generic "Deleted X combinations" text.
     const insightParts: string[] = [];
     
     if (newlyConfirmed.length > 0) {
@@ -264,14 +248,7 @@ export const generateGameReview = (guesses: { guess: string; a: number; b: numbe
         }
     }
     
-    if (insightParts.length === 0) {
-        // Fallback if no specific digits/positions changed significantly
-        if (afterCount < 50 && afterCount > 0) {
-             insightParts.push(`範圍縮小至 ${afterCount} 個`);
-        } else {
-             insightParts.push(`刪除 ${diff} 種組合`);
-        }
-    }
+    // Fallback removed: If no specific digits logic, the insight remains empty.
 
     steps.push({
       stepIndex: i + 1,
@@ -280,7 +257,6 @@ export const generateGameReview = (guesses: { guess: string; a: number; b: numbe
       candidatesBefore: beforeCount,
       candidatesAfter: afterCount,
       reductionPercent: percent,
-      comment,
       insight: insightParts.join('，')
     });
     

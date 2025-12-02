@@ -497,10 +497,13 @@ const GameReviewList = ({ guesses }: { guesses: GuessResult[] }) => {
                     {step.result}
                 </span>
              </div>
-             <div className="flex flex-col gap-1">
-                 <span className="text-xs text-amber-200/90 font-bold font-serif">{step.comment}</span>
-                 <span className="text-[10px] text-neutral-300 leading-relaxed">{step.insight}</span>
-             </div>
+             
+             {step.insight && (
+                <div className="flex flex-col gap-1">
+                    <span className="text-[10px] text-neutral-300 leading-relaxed">{step.insight}</span>
+                </div>
+             )}
+             
              <div className="mt-2 flex items-center gap-2 opacity-90">
                  <div className="flex-1 h-0.5 bg-neutral-700 rounded-full overflow-hidden">
                      <div className="h-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" style={{width: `${step.reductionPercent}%`}}></div>

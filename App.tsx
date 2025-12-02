@@ -249,6 +249,20 @@ const LeaderboardModal = ({ onClose }: { onClose: () => void }) => {
      );
   }
 
+  const formatDate = (timestamp: any) => {
+    if (!timestamp || !timestamp.toDate) return '-';
+    const date = timestamp.toDate();
+    return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
+  };
+
+  const getDaysOnBoard = (timestamp: any) => {
+    if (!timestamp || !timestamp.toDate) return 0;
+    const date = timestamp.toDate();
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    return Math.floor(diffTime / (1000 * 60 * 60 * 24)); 
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="w-[90%] max-w-md h-[80vh] bg-neutral-900 border border-amber-500/30 rounded-2xl shadow-[0_0_50px_rgba(251,191,36,0.1)] relative flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
@@ -313,29 +327,53 @@ const LeaderboardModal = ({ onClose }: { onClose: () => void }) => {
                  else if (idx === 1) { rankStyle = "bg-gradient-to-br from-slate-300 to-slate-400 text-neutral-900 font-bold border-slate-300"; borderStyle = "border-slate-400/50"; }
                  else if (idx === 2) { rankStyle = "bg-gradient-to-br from-orange-400 to-orange-700 text-white font-bold border-orange-500"; borderStyle = "border-orange-600/50"; }
 
+                 const daysOnBoard = getDaysOnBoard(entry.timestamp);
+
                  return (
-                   <div key={idx} className={`flex items-center p-3 rounded-lg border ${borderStyle} bg-neutral-900/50 hover:bg-neutral-800/80 transition-colors group`}>
-                      <div className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-serif ${rankStyle}`}>
+                   <div key={idx} className={`flex items-start p-3 rounded-lg border ${borderStyle} bg-neutral-900/50 hover:bg-neutral-800/80 transition-colors group relative overflow-hidden`}>
+                      <div className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-serif flex-shrink-0 mt-0.5 ${rankStyle}`}>
                          {idx + 1}
                       </div>
-                      <div className="flex-1 ml-4 min-w-0">
-                         <div className="flex justify-between items-baseline">
-                            <span className="font-mono font-bold text-amber-100 text-lg tracking-widest truncate">{entry.nickname}</span>
-                            <span className="font-mono font-bold text-amber-400 text-lg">{entry.score.toLocaleString()}</span>
+                      <div className="flex-1 ml-3 min-w-0 flex flex-col gap-1.5">
+                         {/* Top Row: Name and Score */}
+                         <div className="flex justify-between items-center">
+                            <span className="font-mono font-bold text-amber-100 text-sm tracking-wide truncate">{entry.nickname}</span>
+                            <span className="font-mono font-bold text-amber-400 text-sm shadow-amber-500/20 drop-shadow-sm">{entry.score.toLocaleString()}</span>
                          </div>
-                         <div className="flex justify-between text-[10px] text-neutral-500 font-mono mt-1 uppercase">
-                            <span>{entry.difficulty} • {entry.guesses} Guesses</span>
-                            <span>{Math.floor(entry.time)}s</span>
+                         
+                         {/* Middle Row: Game Stats Badges */}
+                         <div className="flex gap-1.5 flex-wrap">
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold font-mono uppercase border ${entry.difficulty === 'hard' ? 'bg-red-900/20 text-red-400 border-red-500/30' : (entry.difficulty === 'smart' ? 'bg-indigo-900/20 text-indigo-400 border-indigo-500/30' : 'bg-amber-900/20 text-amber-400 border-amber-500/30')}`}>
+                              {entry.difficulty}
+                            </span>
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono border border-white/10 bg-neutral-800 text-neutral-400">
+                               {entry.guesses} G
+                            </span>
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono border border-white/10 bg-neutral-800 text-neutral-400">
+                               {entry.time}s
+                            </span>
+                         </div>
+
+                         {/* Bottom Row: Date and Days on Board */}
+                         <div className="flex justify-between items-center text-[9px] text-neutral-600 font-mono">
+                            <span>{formatDate(entry.timestamp)}</span>
+                            {daysOnBoard > 0 && (
+                                <span className="text-amber-700/80 font-bold">{daysOnBoard} days</span>
+                            )}
                          </div>
                       </div>
+                      
+                      {/* Play Button Column */}
                       {entry.replay_data && entry.replay_data.length > 0 && (
-                        <button 
-                          onClick={() => setSelectedReplay({ nickname: entry.nickname, guesses: entry.replay_data! })}
-                          className="ml-2 w-8 h-8 flex items-center justify-center rounded-full bg-neutral-800 text-neutral-500 hover:bg-amber-500 hover:text-neutral-900 transition-all opacity-50 group-hover:opacity-100"
-                          title="Watch Replay"
-                        >
-                          <PlayIcon />
-                        </button>
+                        <div className="flex flex-col justify-center h-full ml-2">
+                            <button 
+                            onClick={() => setSelectedReplay({ nickname: entry.nickname, guesses: entry.replay_data! })}
+                            className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-800 text-neutral-500 hover:bg-amber-500 hover:text-neutral-900 transition-all opacity-40 group-hover:opacity-100 flex-shrink-0 border border-white/5"
+                            title="Watch Replay"
+                            >
+                            <PlayIcon />
+                            </button>
+                        </div>
                       )}
                    </div>
                  );
@@ -544,6 +582,13 @@ export default function App() {
     if (rawScore < 0) rawScore = 0;
     return Math.floor(rawScore * multiplier);
   };
+  
+  // Real-time score calculation for display (assumes next guess wins)
+  const currentLiveScore = useMemo(() => {
+      if (gameState.status !== 'playing') return finalScore;
+      // Calculate based on: current guesses already made + 1 (the next one)
+      return calculateScore(gameState.guesses.length + 1, timeElapsed, difficulty);
+  }, [gameState.guesses.length, timeElapsed, difficulty, gameState.status, finalScore]);
 
   const impossibleDigits = useMemo(() => getImpossibleDigits(gameState.possibleAnswers), [gameState.possibleAnswers]);
   const confirmedPositions = useMemo(() => getConfirmedPositions(gameState.possibleAnswers), [gameState.possibleAnswers]);
@@ -775,22 +820,30 @@ service cloud.firestore {
               <div className="flex flex-col gap-3 min-h-min pb-24">
                 <div className="bg-neutral-800/80 rounded-xl p-3 border border-white/10 backdrop-blur-md shadow-lg flex items-center justify-between relative overflow-hidden h-14">
                      <div className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-amber-600 via-amber-400 to-transparent transition-all duration-700" style={{ width: `${(100 - (remainingCount / 5040) * 100)}%` }}></div>
-                     <div className="flex items-center gap-4">
-                         <div className="flex flex-col">
-                            <span className="text-[8px] text-neutral-500 font-mono uppercase tracking-widest">剩餘</span>
-                            <span className="text-lg font-bold text-amber-100 font-mono leading-none">{remainingCount}</span>
+                     <div className="flex items-center gap-4 w-full justify-between px-1">
+                         <div className="flex items-center gap-4">
+                             {/* Live Score Display */}
+                             <div className="flex flex-col">
+                                <span className="text-[8px] text-amber-500/80 font-mono uppercase tracking-widest">Score</span>
+                                <span className="text-base font-bold text-amber-100 font-mono leading-none tabular-nums shadow-amber-500/20 drop-shadow-sm">
+                                  {currentLiveScore.toLocaleString()}
+                                </span>
+                             </div>
+                             
+                             <div className="w-px h-5 bg-white/10"></div>
+                             
+                             <div className="flex flex-col">
+                                <span className="text-[8px] text-neutral-500 font-mono uppercase tracking-widest">剩餘</span>
+                                <span className="text-base font-bold text-neutral-200 font-mono leading-none">{remainingCount}</span>
+                             </div>
                          </div>
-                         <div className="w-px h-5 bg-white/5"></div>
-                         <div className="flex flex-col">
-                            <span className="text-[8px] text-neutral-500 font-mono uppercase tracking-widest">排除</span>
-                            <span className="text-xs font-bold text-neutral-400 font-mono leading-none">{(100 - (remainingCount / 5040) * 100).toFixed(1)}%</span>
-                         </div>
+                         
+                         {remainingCount < 50 && remainingCount > 0 && (
+                             <div className="animate-in fade-in slide-in-from-right-4">
+                                <PositionalAnalysis possibleAnswers={gameState.possibleAnswers} />
+                             </div>
+                         )}
                      </div>
-                     {remainingCount < 50 && remainingCount > 0 && (
-                         <div className="animate-in fade-in slide-in-from-right-4">
-                            <PositionalAnalysis possibleAnswers={gameState.possibleAnswers} />
-                         </div>
-                     )}
                 </div>
                 <div className="flex-1">
                    <GameHistory guesses={reversedGuesses} totalGuesses={gameState.guesses.length} />

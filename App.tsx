@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { generateAllCombinations, generateSecret, calculateAB, filterPossibilities, getImpossibleDigits, getConfirmedPositions, getPositionalPossibilities, getDigitProbabilities, generateGameReview, ReviewStep, generateRandomName } from './utils/gameEngine';
+import { generateSecret, calculateAB, filterPossibilities, getImpossibleDigits, getConfirmedPositions, getPositionalPossibilities, getDigitProbabilities, generateGameReview, ReviewStep, generateRandomName, INITIAL_POOL } from './utils/gameEngine';
 import { GuessResult, GameState } from './types';
 import NumberPad from './components/NumberPad';
 import { db, fetchLeaderboard, submitScore, LeaderboardEntry } from './services/firebase';
@@ -8,22 +8,6 @@ import { db, fetchLeaderboard, submitScore, LeaderboardEntry } from './services/
 // Icons
 const RefreshIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
-);
-
-const HistoryIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
-);
-
-const BrainIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
-);
-
-const FeatherIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>
-);
-
-const FireIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
 );
 
 const InfoIcon = () => (
@@ -50,6 +34,18 @@ const ArrowLeftIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
 );
 
+const BrainIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+);
+
+const FeatherIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>
+);
+
+const FireIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+);
+
 // --- Custom Logo Component ---
 const GameLogo = () => (
   <div className="relative w-8 h-8 flex items-center justify-center">
@@ -59,7 +55,7 @@ const GameLogo = () => (
   </div>
 );
 
-// --- Luxury Background Component (Brightened) ---
+// --- Luxury Background Component ---
 const LuxuryBackground = () => (
   <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-neutral-900">
     <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,_rgba(30,41,59,1)_0%,_rgba(10,10,10,1)_100%)]"></div>
@@ -180,9 +176,6 @@ const GameRulesModal = ({ onClose, mode = 'collapsible', onStart, initialName = 
                     <div className="mt-2 text-center">
                       <span className="text-emerald-400 font-bold">上榜門檻：6,500 分</span>
                     </div>
-                    <p className="text-[9px] text-neutral-500 mt-1 italic text-center">
-                        * 難度越高，猜測扣分越少，總分加成越高！
-                    </p>
                 </div>
               </div>
             </div>
@@ -554,7 +547,7 @@ export default function App() {
   const [gameState, setGameState] = useState<GameState>({
     secret: generateSecret(),
     guesses: [],
-    possibleAnswers: generateAllCombinations(),
+    possibleAnswers: [...INITIAL_POOL], 
     status: 'playing',
   });
   const [input, setInput] = useState('');
@@ -567,7 +560,6 @@ export default function App() {
   const [userName, setUserName] = useState('');
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle');
-  // New state for error modal
   const [permissionError, setPermissionError] = useState(false);
 
   useEffect(() => {
@@ -591,10 +583,12 @@ export default function App() {
   }, [hasStarted, gameState.status]);
 
   const handleRestart = () => {
+    // FORCE NEW REFERENCE
+    const newPool = [...INITIAL_POOL];
     setGameState({
       secret: generateSecret(),
       guesses: [],
-      possibleAnswers: generateAllCombinations(),
+      possibleAnswers: newPool, 
       status: 'playing',
     });
     setInput('');
@@ -605,18 +599,8 @@ export default function App() {
   };
 
   const handleDifficultyChange = (newDifficulty: Difficulty) => {
-    if (newDifficulty === difficulty) return;
-    // Always ask for confirmation if the game is in progress and guesses have been made
-    if (gameState.guesses.length > 0 && gameState.status === 'playing') {
-        if (window.confirm("切換難度將會重置目前遊戲進度，確定要切換嗎？")) {
-            setDifficulty(newDifficulty);
-            handleRestart();
-        }
-    } else {
-        // If not playing or no guesses yet, just switch and restart seamlessly
-        setDifficulty(newDifficulty);
-        handleRestart();
-    }
+    setDifficulty(newDifficulty);
+    handleRestart();
   };
 
   const calculateScore = (guesses: number, time: number, mode: Difficulty) => {
@@ -634,7 +618,6 @@ export default function App() {
       multiplier = 1.5;
     }
 
-    // Fix: No penalty for the first guess.
     const penaltyGuesses = Math.max(0, guesses - 1);
     
     let rawScore = BASE_SCORE - (penaltyGuesses * guessPenalty) - (time * TIME_PENALTY);
@@ -642,10 +625,8 @@ export default function App() {
     return Math.floor(rawScore * multiplier);
   };
   
-  // Real-time score calculation for display (assumes next guess wins)
   const currentLiveScore = useMemo(() => {
       if (gameState.status !== 'playing') return finalScore;
-      // Calculate based on: current guesses already made + 1 (the next one)
       return calculateScore(gameState.guesses.length + 1, timeElapsed, difficulty);
   }, [gameState.guesses.length, timeElapsed, difficulty, gameState.status, finalScore]);
 
@@ -668,15 +649,11 @@ export default function App() {
   // Automatic Score Submission Effect
   useEffect(() => {
     const autoSubmit = async () => {
-      // Only trigger if won, not submitted yet, has name, and db is connected
       if (gameState.status === 'won' && !scoreSubmitted && db && userName.trim()) {
-         // Calculate final score using current state (gameState.guesses has just updated)
          const scoreToSubmit = finalScore > 0 ? finalScore : calculateScore(gameState.guesses.length, timeElapsed, difficulty);
          
-         // Ensure finalScore state is consistent if it wasn't set yet (safety)
          if (finalScore === 0) setFinalScore(scoreToSubmit);
 
-         // Check threshold
          if (scoreToSubmit < 6500) {
            setUploadStatus('low_score');
            setScoreSubmitted(true);
@@ -705,7 +682,7 @@ export default function App() {
     };
     
     autoSubmit();
-  }, [gameState.status]); // Run when status changes to 'won'
+  }, [gameState.status]);
 
   const handleStartGame = () => {
     if (userName.trim()) {
@@ -722,7 +699,6 @@ export default function App() {
     const newStatus = a === 4 ? 'won' : 'playing';
     
     if (newStatus === 'won') {
-        // Set final score state immediately for display
         setFinalScore(calculateScore(gameState.guesses.length + 1, timeElapsed, difficulty));
     }
 
@@ -752,7 +728,6 @@ export default function App() {
     <div className="flex flex-col h-[100dvh] w-full max-w-md mx-auto relative text-neutral-100 overflow-hidden font-sans bg-black">
       <LuxuryBackground />
       
-      {/* Rules Error Modal (Security Rules) */}
       {permissionError && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
             <div className="bg-neutral-900 border border-red-500 rounded-xl p-6 max-w-lg w-full flex flex-col gap-4 shadow-2xl">
@@ -760,30 +735,22 @@ export default function App() {
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                   權限不足 (Permission Denied)
                </div>
-               <p className="text-neutral-300 text-sm">您的 Firebase 安全性規則拒絕了這次寫入。請前往 Firebase Console 的 <strong>Firestore Database &gt; Rules</strong> 標籤，將內容替換為以下<strong>簡化版安全規則</strong>：</p>
+               <p className="text-neutral-300 text-sm">您的 Firebase 安全性規則拒絕了這次寫入。請前往 Firebase Console 的 <strong>Firestore Database &gt; Rules</strong> 標籤，將內容替換為以下<strong>極簡版安全規則</strong>：</p>
                
                <div className="bg-neutral-950 p-3 rounded border border-white/10 font-mono text-[10px] text-emerald-400 overflow-x-auto select-all">
 <pre>{`rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /leaderboard/{document=**} {
-      // 1. 允許所有人查看
       allow read: if true;
-
-      // 2. 允許建立符合基本條件的成績
-      allow create: if
-         // 分數門檻：6500+
+      allow create: if 
          request.resource.data.score >= 6500 &&
-         // 暱稱長度：10字以內
          request.resource.data.nickname.size() <= 10;
-         
-      // 3. 禁止修改與刪除
       allow update, delete: if false;
     }
   }
 }`}</pre>
                </div>
-               <p className="text-neutral-500 text-xs italic">* 此規則確保只有達標成績能寫入，且不過度驗證細節。</p>
                <button 
                  onClick={() => setPermissionError(false)}
                  className="mt-2 w-full py-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded font-bold"
@@ -821,8 +788,8 @@ service cloud.firestore {
             <div className="flex items-center gap-3">
                <GameLogo />
                <button 
-                  onClick={() => { if(window.confirm('確定要重新開始遊戲嗎？')) handleRestart() }}
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-800/80 hover:bg-neutral-700 text-neutral-400 hover:text-white border border-white/10 transition-colors shadow-sm"
+                  onClick={handleRestart}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-800/80 hover:bg-neutral-700 text-amber-500 hover:text-white border border-white/10 transition-colors shadow-sm"
                   title="重新開始"
                >
                   <RefreshIcon />
@@ -875,7 +842,7 @@ service cloud.firestore {
 
              {/* Game Area */}
              {gameState.status === 'won' ? (
-                <div className="flex-1 flex flex-col p-4 animate-in slide-in-from-bottom-5 fade-in duration-500 h-full">
+                <div className="flex-1 flex flex-col p-4 animate-in slide-in-from-bottom-5 fade-in duration-500 h-full relative">
                     <div className="text-center mb-4 flex-none">
                         <h2 className="text-3xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-600 drop-shadow-sm mb-1">VICTORY</h2>
                         <div className="flex flex-col items-center gap-1">
@@ -889,7 +856,6 @@ service cloud.firestore {
                                          ✓ RANKING ENTRY SUCCESSFUL
                                      </span>
                                  )}
-                                 {/* Only show positive confirmation or error, silence the 'low score' status to avoid negative feeling */}
                                  {uploadStatus === 'permission_error' && (
                                      <span className="text-[10px] text-red-400 font-mono bg-red-900/30 px-2 py-0.5 rounded border border-red-500/30 flex items-center gap-1">
                                          ⚠ UPLOAD FAILED (PERMISSION)
@@ -903,7 +869,7 @@ service cloud.firestore {
                         <GameReviewList guesses={gameState.guesses} />
                     </div>
 
-                    <div className="pt-4 mt-auto flex-none pb-10">
+                    <div className="flex-none sticky bottom-0 z-20 backdrop-blur-lg bg-neutral-900/60 pt-4 pb-8 -mx-4 px-4 border-t border-white/5 mt-auto">
                         <button 
                             onClick={handleRestart}
                             className="w-full py-4 rounded-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-neutral-900 font-bold tracking-[0.2em] shadow-[0_0_20px_rgba(245,158,11,0.3)] transition-all hover:scale-[1.02] active:scale-95 text-lg font-serif flex items-center justify-center gap-3"
@@ -914,7 +880,7 @@ service cloud.firestore {
                     </div>
                 </div>
              ) : (
-                <div className="flex-1 overflow-y-auto px-4 pb-28 custom-scrollbar relative">
+                <div className="flex-1 overflow-y-auto px-4 pb-32 custom-scrollbar relative">
                    {gameState.guesses.length === 0 ? (
                       <div className="h-full flex flex-col items-center justify-center text-neutral-600 gap-4 opacity-50">
                           <div className="w-16 h-16 rounded-full border border-neutral-700 flex items-center justify-center">
@@ -931,6 +897,25 @@ service cloud.firestore {
 
           {gameState.status !== 'won' && (
             <footer className="flex-none p-4 pb-6 bg-neutral-900/80 backdrop-blur-xl border-t border-white/5 z-20 absolute bottom-0 w-full left-0 right-0">
+               
+               {/* Mode Status Bar */}
+               <div className="flex justify-center mb-3">
+                  <div className={`
+                    px-3 py-0.5 rounded-full text-[9px] font-bold tracking-widest uppercase border flex items-center gap-2 shadow-lg
+                    ${difficulty === 'easy' ? 'bg-amber-900/40 text-amber-300 border-amber-500/30' : (
+                      difficulty === 'smart' ? 'bg-indigo-900/40 text-indigo-300 border-indigo-500/30' : 'bg-red-900/40 text-red-300 border-red-500/30'
+                    )}
+                  `}>
+                      {difficulty === 'easy' && <FeatherIcon />}
+                      {difficulty === 'smart' && <BrainIcon />}
+                      {difficulty === 'hard' && <FireIcon />}
+                      <span>
+                        {difficulty} MODE
+                        {isHintLocked ? ` - 提示鎖定中 (${3 - gameState.guesses.length})` : ''}
+                      </span>
+                  </div>
+               </div>
+
                {/* Input Display */}
                <div className="flex justify-center gap-3 mb-4">
                   {[0, 1, 2, 3].map((i) => (

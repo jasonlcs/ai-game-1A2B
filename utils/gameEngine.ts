@@ -23,6 +23,9 @@ export const generateAllCombinations = (): string[] => {
   return combos;
 };
 
+// Cache the initial pool to avoid re-generating strings, but we will fully analyze it each time.
+export const INITIAL_POOL = generateAllCombinations();
+
 /**
  * Generates a random secret number with unique digits.
  */
@@ -66,8 +69,6 @@ export const calculateAB = (secret: string, guess: string): { a: number; b: numb
 
 /**
  * Filters the list of possible answers based on a guess and its result.
- * Logic: If 'Candidate' was the secret, would 'Guess' produce the same 'A' and 'B'?
- * If yes, keep Candidate. If no, discard Candidate.
  */
 export const filterPossibilities = (
   currentPool: string[],
@@ -85,9 +86,6 @@ export const filterPossibilities = (
  * Identifies digits (0-9) that do not appear in ANY of the remaining possible answers.
  */
 export const getImpossibleDigits = (possibleAnswers: string[]): string[] => {
-  // If the pool is full (start of game), no digits are impossible
-  if (possibleAnswers.length > 5000) return [];
-
   const presentDigits = new Set<string>();
   
   for (const answer of possibleAnswers) {
@@ -103,21 +101,16 @@ export const getImpossibleDigits = (possibleAnswers: string[]): string[] => {
 };
 
 /**
- * Identifies digits that are confirmed to be in a specific position (0-3)
- * in ALL remaining possible answers.
- * Returns a map of { digit: positionIndex }.
+ * Identifies digits that are confirmed to be in a specific position (0-3).
  */
 export const getConfirmedPositions = (possibleAnswers: string[]): Record<string, number> => {
   const result: Record<string, number> = {};
-  
   if (possibleAnswers.length === 0) return result;
   
-  // Check each of the 4 positions (columns)
   for (let col = 0; col < 4; col++) {
     const firstVal = possibleAnswers[0][col];
     let allMatch = true;
     
-    // Check if every remaining answer has the same digit at this column
     for (let i = 1; i < possibleAnswers.length; i++) {
       if (possibleAnswers[i][col] !== firstVal) {
         allMatch = false;
@@ -134,11 +127,12 @@ export const getConfirmedPositions = (possibleAnswers: string[]): Record<string,
 };
 
 /**
- * Analyzes the remaining answers and returns the possible digits for each position (0-3).
- * Returns an array of 4 arrays, e.g., [['1', '2'], ['3'], ['5', '6'], ['8', '9']]
+ * Analyzes the remaining answers and returns the possible digits for each position.
  */
 export const getPositionalPossibilities = (possibleAnswers: string[]): string[][] => {
   if (possibleAnswers.length === 0) return [[], [], [], []];
+  // Skip visually if too many possibilities (UI cleanup only)
+  if (possibleAnswers.length > 100) return [[], [], [], []];
 
   const positions: Set<string>[] = [new Set(), new Set(), new Set(), new Set()];
 
@@ -152,27 +146,22 @@ export const getPositionalPossibilities = (possibleAnswers: string[]): string[][
 };
 
 /**
- * Calculates the probability of each digit (0-9) appearing in the secret number
- * based on the remaining possible answers.
- * Returns a map of { digit: probability (0.0 to 1.0) }.
+ * Calculates the probability of each digit (0-9).
  */
 export const getDigitProbabilities = (possibleAnswers: string[]): Record<string, number> => {
   const counts: Record<string, number> = {};
   const digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
   
-  // Initialize counts
   digits.forEach(d => counts[d] = 0);
 
   if (possibleAnswers.length === 0) return counts;
 
-  // Count occurrences
   for (const answer of possibleAnswers) {
     for (const char of answer) {
       counts[char]++;
     }
   }
 
-  // Calculate probabilities
   const total = possibleAnswers.length;
   const probabilities: Record<string, number> = {};
   
@@ -190,40 +179,35 @@ export interface ReviewStep {
   candidatesBefore: number;
   candidatesAfter: number;
   reductionPercent: number;
-  insight: string; // Specific logic (e.g. "Excluded 5, Locked Pos 1")
+  insight: string; 
 }
 
 /**
  * Replays the game history to generate a step-by-step logic review.
  */
 export const generateGameReview = (guesses: { guess: string; a: number; b: number }[]): ReviewStep[] => {
-  let currentPool = generateAllCombinations();
+  // Always start with the full pool
+  let currentPool = INITIAL_POOL; 
   const steps: ReviewStep[] = [];
 
   for (let i = 0; i < guesses.length; i++) {
     const g = guesses[i];
     const beforeCount = currentPool.length;
     
-    // 1. Analyze state BEFORE this guess
     const prevImpossible = getImpossibleDigits(currentPool);
     const prevConfirmed = getConfirmedPositions(currentPool);
 
-    // 2. Apply Filter
     const nextPool = filterPossibilities(currentPool, g.guess, g.a, g.b);
     const afterCount = nextPool.length;
     
-    // 3. Analyze state AFTER this guess
     const nextImpossible = getImpossibleDigits(nextPool);
     const nextConfirmed = getConfirmedPositions(nextPool);
 
-    // 4. Determine Logic Insights (What changed?)
     const newlyExcluded = nextImpossible.filter(d => !prevImpossible.includes(d));
     
-    // For confirmed, we only care about *new* positions or values
     const newlyConfirmed: string[] = [];
     Object.keys(nextConfirmed).forEach(digit => {
         const pos = nextConfirmed[digit];
-        // If this digit wasn't confirmed at this pos before
         if (prevConfirmed[digit] !== pos) {
             newlyConfirmed.push(`[${digit}]在第${pos + 1}位`);
         }
@@ -232,8 +216,6 @@ export const generateGameReview = (guesses: { guess: string; a: number; b: numbe
     const diff = beforeCount - afterCount;
     const percent = beforeCount > 0 ? (diff / beforeCount) * 100 : 0;
     
-    // Generate Insight String (Specific Logic ONLY)
-    // We removed comments and generic "Deleted X combinations" text.
     const insightParts: string[] = [];
     
     if (newlyConfirmed.length > 0) {
@@ -248,8 +230,6 @@ export const generateGameReview = (guesses: { guess: string; a: number; b: numbe
         }
     }
     
-    // Fallback removed: If no specific digits logic, the insight remains empty.
-
     steps.push({
       stepIndex: i + 1,
       guess: g.guess,

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { generateSecret, calculateAB, filterPossibilities, getImpossibleDigits, getConfirmedPositions, getPositionalPossibilities, getDigitProbabilities, generateGameReview, ReviewStep, generateRandomName, INITIAL_POOL } from './utils/gameEngine';
+import { generateSecret, calculateAB, filterPossibilities, getImpossibleDigits, getConfirmedPositions, getPositionalPossibilities, getDigitProbabilities, generateGameReview, ReviewStep, INITIAL_POOL } from './utils/gameEngine';
 import { GuessResult, GameState } from './types';
 import NumberPad from './components/NumberPad';
 import { db, fetchLeaderboard, submitScore, LeaderboardEntry } from './services/firebase';
@@ -190,8 +190,8 @@ const GameRulesModal = ({ onClose, mode = 'collapsible', onStart, initialName = 
                         maxLength={10} 
                         value={initialName}
                         onChange={(e) => onNameChange && onNameChange(e.target.value)}
-                        className="w-full bg-neutral-900 border border-neutral-600 rounded px-3 py-2 font-mono text-white focus:border-amber-500 focus:outline-none"
-                        placeholder="輸入您的名字"
+                        className="w-full bg-neutral-900 border border-neutral-600 rounded px-3 py-2 font-mono text-white focus:border-amber-500 focus:outline-none placeholder:text-neutral-600"
+                        placeholder="請輸入暱稱以開始遊戲"
                       />
                   </div>
                   <button 
@@ -567,9 +567,8 @@ export default function App() {
     const storedName = localStorage.getItem('1a2b_username');
     if (storedName) {
       setUserName(storedName);
-    } else {
-      setUserName(generateRandomName());
-    }
+    } 
+    // Removed automatic random name generation. User must input name.
   }, []);
 
   useEffect(() => {
